@@ -45,8 +45,6 @@
         }
 
         input:focus, textarea:focus { font-size: 16px !important; }
-        
-        /* Eliminadas las reglas de minúsculas forzadas */
     </style>
 </head>
 <body>
@@ -75,7 +73,8 @@
         const App = () => {
             const [items, setItems] = useState(() => {
                 try {
-                    const saved = localStorage.getItem('kura_v11_data');
+                    // Cambiamos la clave a v12 para forzar un inicio limpio sin datos de ejemplo anteriores
+                    const saved = localStorage.getItem('kura_v12_data');
                     return saved ? JSON.parse(saved) : [];
                 } catch (e) { return []; }
             });
@@ -88,7 +87,7 @@
             const [tempImg, setTempImg] = useState(null);
 
             useEffect(() => {
-                localStorage.setItem('kura_v11_data', JSON.stringify(items));
+                localStorage.setItem('kura_v12_data', JSON.stringify(items));
                 if (window.lucide) window.lucide.createIcons();
             }, [items, view, selectedBox, selectedItem]);
 
@@ -193,7 +192,12 @@
                                             </button>
                                         ))}
                                     </div>
-                                ) : <p className="text-center py-24 opacity-20 text-[10px] tracking-[0.3em] uppercase">vacío</p>}
+                                ) : (
+                                    <div className="text-center py-24 space-y-4">
+                                        <p className="opacity-20 text-[10px] tracking-[0.3em] uppercase italic">vacío</p>
+                                        <p className="text-[9px] opacity-10">comienza registrando un objeto en una caja.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -226,8 +230,8 @@
                                 <input autoFocus type="text" placeholder="introduzca término..." className="w-full bg-transparent border-b-[0.5px] border-black/10 py-4 text-3xl font-serif italic focus:outline-none placeholder:opacity-10" value={search} onChange={(e) => setSearch(e.target.value)} />
                                 <div className="space-y-4">
                                     {items.filter(i => 
-                                        i.title.toLowerCase().includes(search.toLowerCase()) || 
-                                        i.box.toLowerCase().includes(search.toLowerCase())
+                                        (i.title || '').toLowerCase().includes(search.toLowerCase()) || 
+                                        (i.box || '').toLowerCase().includes(search.toLowerCase())
                                     ).map(item => (
                                         <div key={item.id} onClick={() => setSelectedItem(item)} className="flex justify-between items-center py-6 border-b-[0.5px] border-black/5">
                                             <div>
@@ -247,7 +251,7 @@
                                 const fd = new FormData(e.target);
                                 const newItem = {
                                     id: Date.now(),
-                                    title: fd.get('title'), // Ya no fuerza minúsculas
+                                    title: fd.get('title'), 
                                     price: fd.get('price'),
                                     box: fd.get('box') || "sin caja",
                                     desc: fd.get('desc'), 
@@ -264,7 +268,6 @@
                                         <input name="title" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl tracking-tight font-light" placeholder="Título del anuncio" />
                                     </div>
                                     
-                                    {/* Selector de Imagen Real */}
                                     <div className="flex flex-col gap-3">
                                         <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">fotografía del objeto</label>
                                         <div className="flex items-center gap-4">
