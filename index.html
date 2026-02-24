@@ -1083,6 +1083,9 @@ function deleteAd(id) {
   cajas.forEach(c=>{ c.items = c.items.filter(i=>i.adId!==id); });
   save();
   renderAds();
+  if (document.getElementById('sec-almacen').style.display === 'block') {
+    renderAlmacen();
+  }
 }
 
 function editAd(id) {
@@ -1242,13 +1245,53 @@ function saveAd() {
   save();
   closeAdForm();
   renderAds();
+  if (document.getElementById('sec-almacen').style.display === 'block') {
+    renderAlmacen();
+  }
 }
 
 // ── Almacén ────────────────────────────────────────────
 function renderAlmacen() {
   const el = document.getElementById('cajaList');
-  document.getElementById('emptyCajas').style.display = cajas.length ? 'none' : 'block';
-  el.innerHTML = cajas.map(c => `
+  const unassignedAds = ads.filter(a => !a.cajaId);
+  
+  const isEmpty = cajas.length === 0 && unassignedAds.length === 0;
+  document.getElementById('emptyCajas').style.display = isEmpty ? 'block' : 'none';
+  
+  let html = '';
+
+  // Renderizamos la caja virtual "SIN LUGAR" para objetos sueltos
+  html += `
+    <div class="caja-card">
+      <div class="caja-header" onclick="toggleCaja('sin-lugar')" style="background: #2a2a2a;">
+        <div class="caja-name">
+          <span class="caja-icon">
+            <div class="hanko-icon" style="border: 1px dashed rgba(255,255,255,0.4); background: transparent;">
+              <div class="hanko-circle" style="background: var(--gray);"></div>
+            </div>
+          </span>
+          SIN LUGAR
+          <span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:rgba(255,255,255,0.5);">Objetos sueltos</span>
+        </div>
+        <span class="caja-items-count">${unassignedAds.length} obj.</span>
+      </div>
+      <div class="caja-body" id="caja-body-sin-lugar">
+        ${unassignedAds.length === 0 ? '<div class="caja-item" style="color:var(--gray);font-size:12px;">— no hay objetos sueltos —</div>' :
+          unassignedAds.map(ad => `
+            <div class="caja-item">
+              <div class="caja-item-dot linked" style="background: var(--gray);"></div>
+              <div class="caja-item-name">${ad.title || 'Sin título'}</div>
+              <button class="icon-btn" onclick="event.stopPropagation(); editAd('${ad.id}')" title="Editar anuncio" style="font-size:14px;">✎</button>
+            </div>
+          `).join('')
+        }
+        <button class="caja-add-btn" onclick="showSection('anuncios'); openAdForm();">+ nuevo anuncio suelto</button>
+      </div>
+    </div>
+  `;
+
+  // Renderizamos el resto de cajas reales
+  html += cajas.map(c => `
     <div class="caja-card">
       <div class="caja-header" onclick="toggleCaja('${c.id}')">
         <div class="caja-name">
@@ -1277,6 +1320,8 @@ function renderAlmacen() {
       </div>
     </div>
   `).join('');
+
+  el.innerHTML = html;
 }
 
 function toggleCaja(id) {
