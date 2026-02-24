@@ -73,8 +73,8 @@
         const App = () => {
             const [items, setItems] = useState(() => {
                 try {
-                    // Cambiamos la clave a v12 para forzar un inicio limpio sin datos de ejemplo anteriores
-                    const saved = localStorage.getItem('kura_v12_data');
+                    // LLAVE NUEVA: Forzamos un inicio completamente limpio
+                    const saved = localStorage.getItem('kura_v13_clean');
                     return saved ? JSON.parse(saved) : [];
                 } catch (e) { return []; }
             });
@@ -85,9 +85,10 @@
             const [search, setSearch] = useState('');
             const [copyStatus, setCopyStatus] = useState(null);
             const [tempImg, setTempImg] = useState(null);
+            const [isCompressing, setIsCompressing] = useState(false);
 
             useEffect(() => {
-                localStorage.setItem('kura_v12_data', JSON.stringify(items));
+                localStorage.setItem('kura_v13_clean', JSON.stringify(items));
                 if (window.lucide) window.lucide.createIcons();
             }, [items, view, selectedBox, selectedItem]);
 
@@ -118,15 +119,47 @@
                 downloadAnchorNode.remove();
             };
 
+            // Nuevo sistema de compresión de imágenes para evitar llenar la memoria del iPhone
             const handleImageChange = (e) => {
                 const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setTempImg(reader.result);
+                if (!file) return;
+                
+                setIsCompressing(true);
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Tamaño óptimo para web móvil
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Comprimir a JPEG con 70% de calidad
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        setTempImg(compressedDataUrl);
+                        setIsCompressing(false);
                     };
-                    reader.readAsDataURL(file);
-                }
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
             };
 
             if (view === 'home') return (
@@ -272,14 +305,16 @@
                                         <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">fotografía del objeto</label>
                                         <div className="flex items-center gap-4">
                                             <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-black/20 cursor-pointer overflow-hidden bg-neutral-50 active:bg-neutral-100 transition-colors">
-                                                {tempImg ? (
+                                                {isCompressing ? (
+                                                    <span className="text-[9px] opacity-40 uppercase tracking-widest">procesando</span>
+                                                ) : tempImg ? (
                                                     <img src={tempImg} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <Icon name="camera" className="opacity-20" />
                                                 )}
                                                 <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="hidden" />
                                             </label>
-                                            <span className="text-[9px] opacity-30 max-w-[150px]">Pulsa para usar la cámara o elegir una foto.</span>
+                                            <span className="text-[9px] opacity-30 max-w-[150px]">Pulsa para usar la cámara o elegir una foto. La imagen se optimizará para ahorrar memoria.</span>
                                         </div>
                                     </div>
 
@@ -298,7 +333,9 @@
                                         <textarea name="desc" rows="4" className="border-b-[0.5px] border-black py-3 focus:outline-none text-sm leading-relaxed resize-none font-light" placeholder="Escribe los detalles tal como quieres que se lean..." />
                                     </div>
                                 </div>
-                                <button className="w-full bg-black text-white text-[10px] font-bold uppercase tracking-[0.5em] py-6 shadow-sm active:bg-red-600 transition-colors">guardar registro</button>
+                                <button disabled={isCompressing} className={`w-full text-white text-[10px] font-bold uppercase tracking-[0.5em] py-6 shadow-sm transition-colors ${isCompressing ? 'bg-black/20' : 'bg-black active:bg-red-600'}`}>
+                                    {isCompressing ? 'cargando imagen...' : 'guardar registro'}
+                                </button>
                             </form>
                         )}
                     </main>
@@ -326,8 +363,8 @@
                                         <span className="text-[8px] tracking-[0.4em] opacity-20 font-bold italic uppercase">borrador wallapop</span>
                                         <span className="text-3xl font-light text-red-600 font-serif">{selectedItem.price} €</span>
                                     </div>
-                                    <p className="text-sm leading-relaxed font-normal tracking-wide text-black/60">
-                                        {selectedItem.desc || "sin descripción."}
+                                    <p className="text-sm leading-relaxed font-normal tracking-wide text-black/60 whitespace-pre-wrap">
+                                        {selectedItem.desc || "Sin descripción."}
                                     </p>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button onClick={() => handleCopy(selectedItem.title, 'title')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'title' ? 'bg-black text-white' : ''}`}>
@@ -346,7 +383,7 @@
                                         {selectedItem.sold ? 'devolver al inventario' : 'marcar como vendido'}
                                     </button>
                                     <button onClick={() => {
-                                        if(confirm('¿eliminar?')) {
+                                        if(confirm('¿Eliminar permanentemente?')) {
                                             setItems(items.filter(i => i.id !== selectedItem.id));
                                             setSelectedItem(null);
                                         }
