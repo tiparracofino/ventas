@@ -1,405 +1,1270 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Kura Archive</title>
-    <!-- Bibliotecas externas -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:italic,wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            background-color: #ffffff;
-            color: #000000;
-            letter-spacing: -0.01em;
-        }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .safe-area-top { padding-top: env(safe-area-inset-top); }
-        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        .animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Contenedor del icono tipo bandera hanko */
-        .hanko-flag-container {
-            width: 70px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #ffffff;
-            position: relative;
-            transition: all 0.4s ease;
-        }
-        
-        .hanko-flag-container:active {
-            transform: scale(0.95);
-            opacity: 0.7;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>売り場 · Uriba</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Noto+Sans+JP:wght@300;400&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f8f5f0;
+    --red: #c0392b;
+    --red-light: #e74c3c;
+    --gray: #888;
+    --border: #d4cfc9;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-weight: 300;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Ajuste para el notch del iPhone */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: calc(20px + env(safe-area-inset-top)) 24px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 3px solid var(--red);
+  }
+  .header-inner {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .logo-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--paper);
+  }
+  .logo-sub {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+  .logo-dot {
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
 
-        input:focus, textarea:focus { font-size: 16px !important; }
-    </style>
+  /* Nav */
+  nav {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper);
+    position: sticky;
+    top: calc(79px + env(safe-area-inset-top));
+    z-index: 99;
+  }
+  nav button {
+    flex: 1;
+    padding: 14px 8px;
+    background: none;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  nav button .nav-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  nav button.active {
+    color: var(--red);
+    border-bottom-color: var(--red);
+  }
+  nav button.active .nav-jp { color: var(--red); }
+
+  /* Main */
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px 100px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 12px 24px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-primary:active { background: var(--red); }
+  .btn-red {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-red:active { opacity: 0.85; }
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    color: var(--ink);
+    transition: border-color 0.2s;
+  }
+  .btn-ghost:active { border-color: var(--ink); }
+
+  /* Section header */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-head h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    font-weight: 400;
+  }
+  .section-head span {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+  .count-badge {
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0;
+  }
+
+  /* Cards - Anuncios */
+  .ad-card {
+    border: 1px solid var(--border);
+    background: white;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .ad-card-accent {
+    width: 4px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .ad-card.vendido .ad-card-accent { background: #27ae60; }
+  .ad-card.reservado .ad-card-accent { background: #f39c12; }
+  .ad-card.activo .ad-card-accent { background: var(--red); }
+
+  .ad-image-slot {
+    width: 90px;
+    min-height: 90px;
+    background: #f0ece6;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+  .ad-image-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .ad-content {
+    padding: 12px 12px 12px 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  .ad-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    font-weight: 400;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ad-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: -0.5px;
+  }
+  .ad-price span { font-size: 11px; font-weight: 300; color: var(--gray); }
+  .ad-desc {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: 4px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ad-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .status-chip {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border: 1px solid;
+  }
+  .status-chip.activo { color: var(--red); border-color: var(--red); }
+  .status-chip.vendido { color: #27ae60; border-color: #27ae60; }
+  .status-chip.reservado { color: #f39c12; border-color: #f39c12; }
+  .status-chip.borrador { color: var(--gray); border-color: var(--border); }
+  .cat-chip {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray);
+    background: var(--paper);
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+  }
+
+  .ad-actions {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px 12px 14px;
+    align-items: flex-end;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    color: var(--gray);
+    transition: color 0.2s;
+  }
+  .icon-btn:active { color: var(--red); }
+
+  /* Form */
+  .form-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,26,0.85);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .form-overlay.open { display: flex; }
+  .form-panel {
+    background: var(--paper);
+    width: 100%;
+    max-width: 640px;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-top: 3px solid var(--red);
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .form-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 18px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .form-grid { display: flex; flex-direction: column; gap: 14px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+  input, textarea, select {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px; /* Evita auto-zoom en iOS Safari */
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    font-weight: 300;
+    border-radius: 0;
+    -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--ink); }
+  textarea { resize: vertical; min-height: 80px; }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+
+  /* Almacén */
+  .caja-card {
+    border: 1px solid var(--border);
+    background: white;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .caja-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .caja-name {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  /* Icono Bandera SVG para Cajas */
+  .caja-icon { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hanko-icon {
+    width: 28px;
+    height: 18px;
+    border: 1px solid var(--paper);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hanko-circle {
+    width: 8px;
+    height: 8px;
+    background-color: var(--red);
+    border-radius: 50%;
+  }
+
+  .caja-items-count {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 1px;
+  }
+  .caja-body {
+    padding: 0;
+    display: none;
+  }
+  .caja-body.open { display: block; }
+  .caja-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    font-size: 13px;
+  }
+  .caja-item:last-child { border-bottom: none; }
+  .caja-item-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .caja-item-dot.linked { background: var(--red); }
+  .caja-item-name { flex: 1; }
+  .caja-item-linked {
+    font-size: 10px;
+    color: var(--red);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .caja-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--gray);
+    cursor: pointer;
+    border-top: 1px dashed var(--border);
+    font-family: 'Noto Sans JP', sans-serif;
+    text-transform: uppercase;
+  }
+  .caja-add-btn:active { color: var(--red); background: #fdfdfd; }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray);
+  }
+  .empty-jp {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 36px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.2;
+  }
+  .empty p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .stat-cell {
+    background: white;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    display: block;
+    color: var(--red);
+  }
+  .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
+
+  /* Wallapop copy area */
+  .wallapop-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 16px;
+    display: none;
+  }
+  .wallapop-box.open { display: block; }
+  .wallapop-box h4 {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wallapop-text {
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 12px;
+    border-left: 3px solid var(--red);
+  }
+  .copy-btn {
+    margin-top: 8px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .copy-btn:active { background: var(--red); }
+
+  /* Image upload area */
+  .img-upload-area {
+    border: 1px dashed var(--border);
+    background: white;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .img-upload-area:active { border-color: var(--ink); background: var(--paper); }
+  .img-upload-area input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .img-upload-area p { font-size: 11px; color: var(--gray); letter-spacing: 1px; }
+  
+  /* Indicador de carga para la compresión */
+  #loading-spinner {
+    display: none;
+    font-size: 11px;
+    color: var(--red);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .img-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .img-preview {
+    aspect-ratio: 1;
+    background: #f0ece6;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .img-preview .del-img {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(26,26,26,0.8);
+    color: white;
+    border: none;
+    width: 20px; height: 20px;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--paper); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: 50%;
+    transform: translateX(290px);
+    background: var(--red);
+    color: white;
+    border: none;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    font-size: 28px;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(192,57,43,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fab:active { transform: translateX(290px) scale(0.95); }
+  @media (max-width: 640px) {
+    .fab { right: 20px; transform: none; }
+    .fab:active { transform: scale(0.95); }
+  }
+
+  /* Categorías filter */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    color: var(--gray);
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .filter-chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+</style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-jp">売り場<span class="logo-dot"></span></span>
+      <span class="logo-sub">Goodbye Things · Organizer</span>
+    </div>
+    <div style="font-size:11px;letter-spacing:2px;color:var(--gray);text-align:right;">
+      <div style="color:var(--paper);font-family:'Noto Serif JP',serif;font-size:13px;">手放す</div>
+      <div>dejar ir</div>
+    </div>
+  </div>
+</header>
 
-        // Icono de bandera japonesa con marco negro (Hanko Style)
-        const HankoFlagIcon = () => (
-            <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* El marco negro exterior */}
-                <rect x="0.5" y="0.5" width="59" height="39" stroke="black" strokeWidth="1.5"/>
-                {/* El círculo rojo central */}
-                <circle cx="30" cy="20" r="8" fill="#e60012"/>
-            </svg>
-        );
+<nav id="mainNav">
+  <button class="active" onclick="showSection('anuncios')" id="nav-anuncios">
+    <span class="nav-jp">広告</span>
+    anuncios
+  </button>
+  <button onclick="showSection('almacen')" id="nav-almacen">
+    <span class="nav-jp">倉庫</span>
+    almacén
+  </button>
+</nav>
 
-        const Icon = ({ name, size = 18, className = "", strokeWidth = 1 }) => {
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [name]);
-            return <i data-lucide={name} data-lucide-stroke-width={strokeWidth} style={{ width: size, height: size }} className={`inline-block ${className}`}></i>;
-        };
+<main>
 
-        const App = () => {
-            const [items, setItems] = useState(() => {
-                try {
-                    // LLAVE NUEVA: Forzamos un inicio completamente limpio
-                    const saved = localStorage.getItem('kura_v13_clean');
-                    return saved ? JSON.parse(saved) : [];
-                } catch (e) { return []; }
-            });
+  <!-- ANUNCIOS SECTION -->
+  <section id="sec-anuncios">
+    <div id="statsBar" class="stats-bar"></div>
 
-            const [view, setView] = useState('home'); 
-            const [selectedBox, setSelectedBox] = useState(null);
-            const [selectedItem, setSelectedItem] = useState(null);
-            const [search, setSearch] = useState('');
-            const [copyStatus, setCopyStatus] = useState(null);
-            const [tempImg, setTempImg] = useState(null);
-            const [isCompressing, setIsCompressing] = useState(false);
+    <div class="filter-row" id="filterRow"></div>
 
-            useEffect(() => {
-                localStorage.setItem('kura_v13_clean', JSON.stringify(items));
-                if (window.lucide) window.lucide.createIcons();
-            }, [items, view, selectedBox, selectedItem]);
+    <div class="section-head">
+      <h2>広告</h2>
+      <span>anuncios</span>
+      <span class="count-badge" id="adCount">0</span>
+    </div>
 
-            const totalProfits = useMemo(() => 
-                items.filter(i => i.sold).reduce((acc, curr) => acc + parseFloat(curr.price || 0), 0)
-            , [items]);
+    <div id="adList"></div>
 
-            const boxes = useMemo(() => [...new Set(items.map(i => i.box))].sort(), [items]);
+    <div id="emptyAds" class="empty" style="display:none;">
+      <span class="empty-jp">無</span>
+      <p>Sin artículos aún</p>
+    </div>
+  </section>
 
-            const handleCopy = (text, type) => {
-                const el = document.createElement('textarea');
-                el.value = text;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                setCopyStatus(type);
-                setTimeout(() => setCopyStatus(null), 2000);
-            };
+  <!-- ALMACÉN SECTION -->
+  <section id="sec-almacen" style="display:none;">
+    <div class="section-head">
+      <h2>倉庫</h2>
+      <span>almacén de cajas</span>
+    </div>
 
-            const exportJSON = () => {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-                const downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "kura_backup.json");
-                document.body.appendChild(downloadAnchorNode);
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
-            };
+    <div id="cajaList"></div>
 
-            // Nuevo sistema de compresión de imágenes para evitar llenar la memoria del iPhone
-            const handleImageChange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                setIsCompressing(true);
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800; // Tamaño óptimo para web móvil
-                        const MAX_HEIGHT = 800;
-                        let width = img.width;
-                        let height = img.height;
+    <div id="emptyCajas" class="empty" style="display:none;">
+      <span class="empty-jp">箱</span>
+      <p>Sin cajas aún</p>
+    </div>
 
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Comprimir a JPEG con 70% de calidad
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        setTempImg(compressedDataUrl);
-                        setIsCompressing(false);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            };
+    <div style="margin-top:16px;">
+      <button class="btn-primary" style="width: 100%;" onclick="openCajaForm()">+ Nueva Caja</button>
+    </div>
+  </section>
 
-            if (view === 'home') return (
-                <div className="min-h-screen flex flex-col justify-between py-16 px-8 animate-fade-in safe-area-top safe-area-bottom">
-                    <div className="text-center mt-12">
-                        <span className="text-[10px] tracking-[0.5em] font-medium text-red-600 mb-4 block opacity-60">balance / acumulado</span>
-                        <h2 className="text-8xl font-serif italic tracking-tighter">
-                            {totalProfits}<span className="text-2xl not-italic ml-1 opacity-20 font-light font-sans">€</span>
-                        </h2>
-                        <div className="w-8 h-[0.5px] bg-black/10 mx-auto mt-12"></div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
-                        <button onClick={() => setView('boxes')} className="border-[0.5px] border-black/10 py-5 px-8 text-[10px] tracking-[0.4em] flex justify-between items-center active:bg-black active:text-white transition-all font-medium">
-                            cajas <Icon name="layout-grid" size={14} className="opacity-30" />
-                        </button>
-                        <button onClick={() => setView('search')} className="border-[0.5px] border-black/10 py-5 px-8 text-[10px] tracking-[0.4em] flex justify-between items-center active:bg-black active:text-white transition-all font-medium">
-                            buscar <Icon name="search" size={14} className="opacity-30" />
-                        </button>
-                        <button onClick={() => setView('entry')} className="bg-black text-white py-5 px-8 text-[10px] tracking-[0.4em] flex justify-between items-center shadow-sm active:bg-red-600 font-medium">
-                            registrar <Icon name="plus" size={14} />
-                        </button>
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-8">
-                        <button onClick={exportJSON} className="text-[9px] tracking-[0.2em] opacity-30 flex items-center gap-2 px-4 py-2">
-                            <Icon name="download" size={10} /> exportar json
-                        </button>
-                        <div className="text-[32px] font-serif opacity-[0.04] select-none italic">蔵</div>
-                    </div>
-                </div>
-            );
+</main>
 
-            return (
-                <div className="min-h-screen bg-white animate-fade-in safe-area-top safe-area-bottom">
-                    <header className="px-6 py-8 border-b-[0.5px] border-black/5 flex justify-between items-center sticky top-0 bg-white/90 backdrop-blur-md z-30">
-                        <button onClick={() => { setView('home'); setSelectedBox(null); setTempImg(null); }} className="flex items-center gap-3 active:scale-95 transition-transform group">
-                            <Icon name="arrow-left" size={16} className="group-active:text-red-600" />
-                            <span className="text-[10px] font-bold tracking-[0.3em] opacity-60">volver</span>
-                        </button>
-                        <span className="text-[10px] font-bold tracking-[0.4em] text-red-600">kura</span>
-                    </header>
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="openAdForm()" title="Nuevo anuncio">+</button>
 
-                    <main className="px-6 py-8 pb-32">
-                        {view === 'boxes' && (
-                            <div className="animate-fade-in">
-                                <h2 className="text-[9px] font-bold tracking-[0.4em] mb-12 opacity-20 italic font-sans uppercase">warehouse index</h2>
-                                {boxes.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-16">
-                                        {boxes.map(box => (
-                                            <button 
-                                                key={box} 
-                                                onClick={() => { setSelectedBox(box); setView('list'); }} 
-                                                className="flex flex-col items-center group active:scale-95 transition-transform"
-                                            >
-                                                <div className="hanko-flag-container mb-4">
-                                                    <HankoFlagIcon />
-                                                </div>
-                                                <span className="text-[11px] font-medium tracking-[0.1em] opacity-80 mb-1">{box}</span>
-                                                <span className="text-[8px] opacity-20 tracking-widest uppercase">
-                                                    {items.filter(i => i.box === box).length} objetos
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-24 space-y-4">
-                                        <p className="opacity-20 text-[10px] tracking-[0.3em] uppercase italic">vacío</p>
-                                        <p className="text-[9px] opacity-10">comienza registrando un objeto en una caja.</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+<!-- FORM OVERLAY - ANUNCIO -->
+<div class="form-overlay" id="adFormOverlay">
+  <div class="form-panel">
+    <div class="form-title">
+      <span id="formTitle">新しい広告 · Nuevo anuncio</span>
+      <button class="icon-btn" onclick="closeAdForm()" style="font-size:20px;">✕</button>
+    </div>
 
-                        {view === 'list' && (
-                            <div className="space-y-12 animate-fade-in">
-                                <div className="mb-4">
-                                    <span className="text-[8px] font-bold tracking-[0.4em] opacity-30 italic">{selectedBox}</span>
-                                    <h2 className="text-5xl font-serif italic tracking-tighter">contenido</h2>
-                                </div>
-                                {items.filter(i => i.box === selectedBox).map(item => (
-                                    <div key={item.id} onClick={() => setSelectedItem(item)} className="flex gap-6 items-center border-b border-black/5 pb-8">
-                                        <div className="w-16 h-16 bg-neutral-50 border-[0.5px] border-black/5 overflow-hidden flex-shrink-0">
-                                            {item.img ? (
-                                                <img src={item.img} className={`w-full h-full object-cover grayscale transition-opacity duration-500 ${item.sold ? 'opacity-10' : ''}`} />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center opacity-10"><Icon name="camera" /></div>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col justify-center flex-grow">
-                                            <h3 className={`text-[11px] font-medium tracking-widest mb-1 ${item.sold ? 'line-through opacity-20' : ''}`}>{item.title}</h3>
-                                            <span className="text-sm font-light text-red-600 italic font-serif">{item.price} €</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+    <div class="form-grid">
+      <label>
+        Título del artículo
+        <input type="text" id="f-title" placeholder="Ej: Cámara analógica Nikon FM2">
+      </label>
 
-                        {view === 'search' && (
-                            <div className="space-y-8 animate-fade-in">
-                                <input autoFocus type="text" placeholder="introduzca término..." className="w-full bg-transparent border-b-[0.5px] border-black/10 py-4 text-3xl font-serif italic focus:outline-none placeholder:opacity-10" value={search} onChange={(e) => setSearch(e.target.value)} />
-                                <div className="space-y-4">
-                                    {items.filter(i => 
-                                        (i.title || '').toLowerCase().includes(search.toLowerCase()) || 
-                                        (i.box || '').toLowerCase().includes(search.toLowerCase())
-                                    ).map(item => (
-                                        <div key={item.id} onClick={() => setSelectedItem(item)} className="flex justify-between items-center py-6 border-b-[0.5px] border-black/5">
-                                            <div>
-                                                <p className="text-[10px] font-medium tracking-widest">{item.title}</p>
-                                                <p className="text-[8px] opacity-30 mt-1 italic">{item.box}</p>
-                                            </div>
-                                            <span className="text-xs text-red-600 font-semibold">{item.price}€</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+      <div class="form-row">
+        <label>
+          Precio (€)
+          <input type="number" id="f-price" placeholder="0">
+        </label>
+        <label>
+          Categoría
+          <select id="f-cat">
+            <option value="Tecnología">Tecnología</option>
+            <option value="Ropa">Ropa</option>
+            <option value="Hogar">Hogar</option>
+            <option value="Libros">Libros</option>
+            <option value="Arte">Arte</option>
+            <option value="Deporte">Deporte</option>
+            <option value="Música">Música</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </label>
+      </div>
 
-                        {view === 'entry' && (
-                            <form onSubmit={(e) => {
-                                e.preventDefault();
-                                const fd = new FormData(e.target);
-                                const newItem = {
-                                    id: Date.now(),
-                                    title: fd.get('title'), 
-                                    price: fd.get('price'),
-                                    box: fd.get('box') || "sin caja",
-                                    desc: fd.get('desc'), 
-                                    sold: false,
-                                    img: tempImg
-                                };
-                                setItems([newItem, ...items]);
-                                setTempImg(null);
-                                setView('home');
-                            }} className="space-y-12 py-4 animate-fade-in">
-                                <div className="space-y-6">
-                                    <div className="flex flex-col gap-3">
-                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">nombre del objeto</label>
-                                        <input name="title" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl tracking-tight font-light" placeholder="Título del anuncio" />
-                                    </div>
-                                    
-                                    <div className="flex flex-col gap-3">
-                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">fotografía del objeto</label>
-                                        <div className="flex items-center gap-4">
-                                            <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-black/20 cursor-pointer overflow-hidden bg-neutral-50 active:bg-neutral-100 transition-colors">
-                                                {isCompressing ? (
-                                                    <span className="text-[9px] opacity-40 uppercase tracking-widest">procesando</span>
-                                                ) : tempImg ? (
-                                                    <img src={tempImg} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <Icon name="camera" className="opacity-20" />
-                                                )}
-                                                <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="hidden" />
-                                            </label>
-                                            <span className="text-[9px] opacity-30 max-w-[150px]">Pulsa para usar la cámara o elegir una foto. La imagen se optimizará para ahorrar memoria.</span>
-                                        </div>
-                                    </div>
+      <label>
+        Estado del artículo
+        <select id="f-condition">
+          <option value="Como nuevo">Como nuevo</option>
+          <option value="Muy buen estado">Muy buen estado</option>
+          <option value="Buen estado">Buen estado</option>
+          <option value="Aceptable">Aceptable</option>
+        </select>
+      </label>
 
-                                    <div className="grid grid-cols-2 gap-10">
-                                        <div className="flex flex-col gap-3">
-                                            <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">precio (€)</label>
-                                            <input name="price" type="number" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="0" />
-                                        </div>
-                                        <div className="flex flex-col gap-3">
-                                            <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">caja / id</label>
-                                            <input name="box" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="Nombre de la caja" />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-3">
-                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">descripción wallapop</label>
-                                        <textarea name="desc" rows="4" className="border-b-[0.5px] border-black py-3 focus:outline-none text-sm leading-relaxed resize-none font-light" placeholder="Escribe los detalles tal como quieres que se lean..." />
-                                    </div>
-                                </div>
-                                <button disabled={isCompressing} className={`w-full text-white text-[10px] font-bold uppercase tracking-[0.5em] py-6 shadow-sm transition-colors ${isCompressing ? 'bg-black/20' : 'bg-black active:bg-red-600'}`}>
-                                    {isCompressing ? 'cargando imagen...' : 'guardar registro'}
-                                </button>
-                            </form>
-                        )}
-                    </main>
+      <label>
+        Descripción para Wallapop
+        <textarea id="f-desc" placeholder="Describe el artículo con honestidad. Medidas, defectos, motivo de venta..."></textarea>
+      </label>
 
-                    {selectedItem && (
-                        <div className="fixed inset-0 z-50 bg-white flex flex-col animate-fade-in overflow-y-auto pb-24">
-                            <header className="px-6 py-8 border-b-[0.5px] border-black/5 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm">
-                                <span className="text-[9px] font-bold tracking-[0.4em] text-red-600 italic uppercase">ficha de registro</span>
-                                <button onClick={() => setSelectedItem(null)} className="p-3 border-[0.5px] border-black/10 rounded-full active:bg-neutral-50"><Icon name="x" size={18}/></button>
-                            </header>
-                            <div className="px-6 py-10 max-w-md mx-auto w-full space-y-12">
-                                <div className="aspect-square bg-neutral-50 border-[0.5px] border-black/5 overflow-hidden">
-                                    {selectedItem.img ? (
-                                        <img src={selectedItem.img} className="w-full h-full object-cover grayscale brightness-95" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center opacity-10"><Icon name="image" size={48} /></div>
-                                    )}
-                                </div>
-                                <div className="space-y-4 text-center">
-                                    <span className="text-[10px] font-medium tracking-[0.4em] text-red-600 italic block font-sans uppercase">{selectedItem.box}</span>
-                                    <h2 className="text-4xl font-serif italic tracking-tighter leading-tight mt-2">{selectedItem.title}</h2>
-                                </div>
-                                <div className="py-12 border-y-[0.5px] border-black/10 space-y-10">
-                                    <div className="flex justify-between items-baseline">
-                                        <span className="text-[8px] tracking-[0.4em] opacity-20 font-bold italic uppercase">borrador wallapop</span>
-                                        <span className="text-3xl font-light text-red-600 font-serif">{selectedItem.price} €</span>
-                                    </div>
-                                    <p className="text-sm leading-relaxed font-normal tracking-wide text-black/60 whitespace-pre-wrap">
-                                        {selectedItem.desc || "Sin descripción."}
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => handleCopy(selectedItem.title, 'title')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'title' ? 'bg-black text-white' : ''}`}>
-                                            {copyStatus === 'title' ? <Icon name="check" size={12} /> : <Icon name="copy" size={12} />} título
-                                        </button>
-                                        <button onClick={() => handleCopy(selectedItem.desc, 'desc')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'desc' ? 'bg-black text-white' : ''}`}>
-                                            {copyStatus === 'desc' ? <Icon name="check" size={12} /> : <Icon name="copy" size={12} />} texto
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-6 items-center">
-                                    <button onClick={() => {
-                                        setItems(items.map(i => i.id === selectedItem.id ? {...i, sold: !i.sold} : i));
-                                        setSelectedItem(null);
-                                    }} className={`w-full py-6 text-[10px] font-bold uppercase tracking-[0.4em] border-[0.5px] transition-colors ${selectedItem.sold ? 'border-black text-black' : 'bg-red-600 border-red-600 text-white'}`}>
-                                        {selectedItem.sold ? 'devolver al inventario' : 'marcar como vendido'}
-                                    </button>
-                                    <button onClick={() => {
-                                        if(confirm('¿Eliminar permanentemente?')) {
-                                            setItems(items.filter(i => i.id !== selectedItem.id));
-                                            setSelectedItem(null);
-                                        }
-                                    }} className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-20 flex items-center gap-2 active:text-red-600">
-                                        <Icon name="trash-2" size={12} /> borrar registro
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+      <div class="form-row">
+        <label>
+          Estado de venta
+          <select id="f-status">
+            <option value="borrador">Borrador</option>
+            <option value="activo">Activo</option>
+            <option value="reservado">Reservado</option>
+            <option value="vendido">Vendido</option>
+          </select>
+        </label>
+        <label>
+          Caja asignada
+          <select id="f-caja">
+            <option value="">— Sin caja —</option>
+          </select>
+        </label>
+      </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+      <label>
+        Fotos
+        <div class="img-upload-area">
+          <input type="file" accept="image/*" multiple id="f-photos" onchange="handlePhotos(event)">
+          <p>📷 Toca para añadir fotos</p>
+          <div id="loading-spinner">Procesando imagen...</div>
+        </div>
+        <div class="img-preview-grid" id="photoPreviewGrid"></div>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeAdForm()">Cancelar</button>
+      <button class="btn-primary" onclick="saveAd()">Guardar 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORM OVERLAY - CAJA -->
+<div class="form-overlay" id="cajaFormOverlay">
+  <div class="form-panel">
+    <div class="form-title">
+      <span>箱 · Nueva Caja</span>
+      <button class="icon-btn" onclick="closeCajaForm()" style="font-size:20px;">✕</button>
+    </div>
+    <div class="form-grid">
+      <label>
+        Identificador de la caja
+        <input type="text" id="cf-name" placeholder="Ej: CAJA-01">
+      </label>
+      <label>
+        Descripción (opcional)
+        <input type="text" id="cf-desc" placeholder="Ej: Junto a la ventana">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeCajaForm()">Cancelar</button>
+      <button class="btn-primary" onclick="saveCaja()">Crear Caja</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORM OVERLAY - ITEM EN CAJA -->
+<div class="form-overlay" id="itemFormOverlay">
+  <div class="form-panel">
+    <div class="form-title">
+      <span>物品 · Añadir artículo</span>
+      <button class="icon-btn" onclick="closeItemForm()" style="font-size:20px;">✕</button>
+    </div>
+    <div class="form-grid">
+      <label>
+        Nombre del artículo
+        <input type="text" id="if-name" placeholder="¿Qué hay en esta caja?">
+      </label>
+      <label>
+        Vincular con anuncio (opcional)
+        <select id="if-ad">
+          <option value="">— Sin vincular —</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeItemForm()">Cancelar</button>
+      <button class="btn-primary" onclick="saveItem()">Añadir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let ads = JSON.parse(localStorage.getItem('uriba_ads') || '[]');
+let cajas = JSON.parse(localStorage.getItem('uriba_cajas') || '[]');
+let editingAdId = null;
+let editingCajaId = null;
+let currentPhotos = []; // base64 array
+let currentFilter = 'Todos';
+
+// ── Persistence ────────────────────────────────────────
+function save() {
+  localStorage.setItem('uriba_ads', JSON.stringify(ads));
+  localStorage.setItem('uriba_cajas', JSON.stringify(cajas));
+}
+
+// ── Nav ────────────────────────────────────────────────
+function showSection(id) {
+  ['anuncios','almacen'].forEach(s => {
+    document.getElementById('sec-'+s).style.display = s===id ? 'block' : 'none';
+    document.getElementById('nav-'+s).classList.toggle('active', s===id);
+  });
+  const fab = document.getElementById('fabBtn');
+  fab.style.display = id === 'anuncios' ? 'flex' : 'none';
+  if (id === 'almacen') renderAlmacen();
+  else renderAds();
+}
+
+// ── Stats ──────────────────────────────────────────────
+function renderStats() {
+  const total = ads.length;
+  const vendidos = ads.filter(a=>a.status==='vendido').length;
+  const ganancias = ads.filter(a=>a.status==='vendido').reduce((s,a)=>s+(parseFloat(a.price)||0),0);
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-cell"><span class="stat-val">${total}</span><span class="stat-label">artículos</span></div>
+    <div class="stat-cell"><span class="stat-val">${vendidos}</span><span class="stat-label">vendidos</span></div>
+    <div class="stat-cell"><span class="stat-val">${ganancias.toFixed(0)}€</span><span class="stat-label">ganados</span></div>
+  `;
+}
+
+// ── Filters ────────────────────────────────────────────
+function renderFilters() {
+  const cats = ['Todos', ...new Set(ads.map(a=>a.category))];
+  document.getElementById('filterRow').innerHTML = cats.map(c =>
+    `<button class="filter-chip ${c===currentFilter?'active':''}" onclick="setFilter('${c}')">${c}</button>`
+  ).join('');
+}
+function setFilter(cat) {
+  currentFilter = cat;
+  renderAds();
+}
+
+// ── Ads Render ─────────────────────────────────────────
+function renderAds() {
+  renderStats();
+  renderFilters();
+  const filtered = currentFilter==='Todos' ? ads : ads.filter(a=>a.category===currentFilter);
+  document.getElementById('adCount').textContent = filtered.length;
+  const el = document.getElementById('adList');
+  document.getElementById('emptyAds').style.display = filtered.length ? 'none' : 'block';
+
+  el.innerHTML = filtered.map(ad => {
+    const img = ad.photos && ad.photos[0]
+      ? `<img src="${ad.photos[0]}" alt="">`
+      : '📸';
+    const cajaName = ad.cajaId ? (cajas.find(c=>c.id===ad.cajaId)||{name:'?'}).name : '';
+    return `
+    <div class="ad-card ${ad.status}">
+      <div class="ad-card-accent"></div>
+      <div class="ad-image-slot">${img}</div>
+      <div class="ad-content">
+        <div class="ad-title">${ad.title || 'Sin título'}</div>
+        <div class="ad-price">${ad.price ? ad.price+'€' : '—'} <span>· ${ad.condition||''}</span></div>
+        <div class="ad-desc">${ad.desc||''}</div>
+        <div class="ad-meta">
+          <span class="status-chip ${ad.status}">${ad.status}</span>
+          <span class="cat-chip">${ad.category||''}</span>
+          ${cajaName ? `<span class="cat-chip">📦 ${cajaName}</span>` : ''}
+        </div>
+      </div>
+      <div class="ad-actions">
+        <button class="icon-btn" onclick="editAd('${ad.id}')" title="Editar">✎</button>
+        <button class="icon-btn" onclick="toggleWallapop('${ad.id}')" title="Wallapop">📋</button>
+        <button class="icon-btn" onclick="deleteAd('${ad.id}')" title="Eliminar" style="color:var(--red)">✕</button>
+      </div>
+    </div>
+    <div class="wallapop-box" id="wbox-${ad.id}">
+      <h4>📋 Texto para Wallapop</h4>
+      <div class="wallapop-text">${generateWallapopText(ad)}</div>
+      <button class="copy-btn" onclick="copyWallapop('${ad.id}')">Copiar texto</button>
+    </div>
+    `;
+  }).join('');
+}
+
+function generateWallapopText(ad) {
+  return [
+    ad.title,
+    '',
+    ad.desc,
+    '',
+    `Estado: ${ad.condition || 'Buen estado'}`,
+    `Categoría: ${ad.category || ''}`,
+    '',
+    '📍 Entrega en mano o envío acordado.',
+    'Precio: ' + (ad.price ? ad.price + '€' : 'a convenir'),
+  ].filter(l=>l!==undefined).join('\n');
+}
+
+function toggleWallapop(id) {
+  const box = document.getElementById('wbox-'+id);
+  box.classList.toggle('open');
+}
+
+function copyWallapop(id) {
+  const ad = ads.find(a=>a.id===id);
+  if (!ad) return;
+  navigator.clipboard.writeText(generateWallapopText(ad));
+  const btn = event.target;
+  btn.textContent = '✓ Copiado';
+  setTimeout(()=>btn.textContent='Copiar texto', 2000);
+}
+
+function deleteAd(id) {
+  if (!confirm('¿Eliminar este anuncio permanentemente?')) return;
+  ads = ads.filter(a=>a.id!==id);
+  // Remove from cajas
+  cajas.forEach(c=>{ c.items = c.items.filter(i=>i.adId!==id); });
+  save();
+  renderAds();
+}
+
+function editAd(id) {
+  const ad = ads.find(a=>a.id===id);
+  if (!ad) return;
+  editingAdId = id;
+  currentPhotos = ad.photos ? [...ad.photos] : [];
+  document.getElementById('f-title').value = ad.title || '';
+  document.getElementById('f-price').value = ad.price || '';
+  document.getElementById('f-cat').value = ad.category || 'Otro';
+  document.getElementById('f-condition').value = ad.condition || 'Buen estado';
+  document.getElementById('f-desc').value = ad.desc || '';
+  document.getElementById('f-status').value = ad.status || 'borrador';
+  populateCajaSelect(ad.cajaId);
+  renderPhotoPreview();
+  document.getElementById('formTitle').textContent = '編集 · Editar anuncio';
+  document.getElementById('adFormOverlay').classList.add('open');
+}
+
+// ── Ad Form & Image Compression ────────────────────────
+function openAdForm() {
+  editingAdId = null;
+  currentPhotos = [];
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-price').value = '';
+  document.getElementById('f-cat').value = 'Otro';
+  document.getElementById('f-condition').value = 'Buen estado';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-status').value = 'borrador';
+  document.getElementById('photoPreviewGrid').innerHTML = '';
+  populateCajaSelect('');
+  document.getElementById('formTitle').textContent = '新しい広告 · Nuevo anuncio';
+  document.getElementById('adFormOverlay').classList.add('open');
+}
+
+function closeAdForm() {
+  document.getElementById('adFormOverlay').classList.remove('open');
+}
+
+function populateCajaSelect(selected) {
+  const sel = document.getElementById('f-caja');
+  sel.innerHTML = '<option value="">— Sin caja —</option>' +
+    cajas.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${c.name}</option>`).join('');
+}
+
+// Nuevo sistema de compresión para evitar llenar la memoria del iPhone
+function handlePhotos(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  
+  const spinner = document.getElementById('loading-spinner');
+  spinner.style.display = 'block';
+  
+  let processed = 0;
+
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800; // Resolución ideal para web
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+        } else {
+          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Comprime a formato JPEG con un 70% de calidad
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        currentPhotos.push(compressedDataUrl);
+        
+        processed++;
+        if (processed === files.length) {
+            spinner.style.display = 'none';
+            renderPhotoPreview();
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderPhotoPreview() {
+  document.getElementById('photoPreviewGrid').innerHTML = currentPhotos.map((p,i)=>`
+    <div class="img-preview">
+      <img src="${p}">
+      <button class="del-img" onclick="removePhoto(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removePhoto(i) {
+  currentPhotos.splice(i, 1);
+  renderPhotoPreview();
+}
+
+function saveAd() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('El título es obligatorio'); return; }
+  const newCajaId = document.getElementById('f-caja').value;
+  const adId = editingAdId || Date.now().toString();
+  const oldAd = editingAdId ? ads.find(a=>a.id===editingAdId) : null;
+  const oldCajaId = oldAd ? oldAd.cajaId : '';
+
+  const ad = {
+    id: adId,
+    title,
+    price: document.getElementById('f-price').value,
+    category: document.getElementById('f-cat').value,
+    condition: document.getElementById('f-condition').value,
+    desc: document.getElementById('f-desc').value,
+    status: document.getElementById('f-status').value,
+    cajaId: newCajaId,
+    photos: currentPhotos,
+    createdAt: oldAd ? oldAd.createdAt : Date.now(),
+  };
+
+  if (editingAdId) {
+    const i = ads.findIndex(a=>a.id===editingAdId);
+    ads[i] = ad;
+  } else {
+    ads.unshift(ad);
+  }
+
+  // Sync cajas: remove from old caja if changed
+  if (oldCajaId && oldCajaId !== newCajaId) {
+    const oldCaja = cajas.find(c=>c.id===oldCajaId);
+    if (oldCaja) oldCaja.items = oldCaja.items.filter(i=>i.adId!==adId);
+  }
+
+  // Add to new caja if assigned and not already there
+  if (newCajaId) {
+    const newCaja = cajas.find(c=>c.id===newCajaId);
+    if (newCaja) {
+      const alreadyIn = newCaja.items.some(i=>i.adId===adId);
+      if (!alreadyIn) {
+        newCaja.items.push({ name: title, adId });
+      } else {
+        // Update name in case title changed
+        const item = newCaja.items.find(i=>i.adId===adId);
+        if (item) item.name = title;
+      }
+    }
+  }
+
+  save();
+  closeAdForm();
+  renderAds();
+}
+
+// ── Almacén ────────────────────────────────────────────
+function renderAlmacen() {
+  const el = document.getElementById('cajaList');
+  document.getElementById('emptyCajas').style.display = cajas.length ? 'none' : 'block';
+  el.innerHTML = cajas.map(c => `
+    <div class="caja-card">
+      <div class="caja-header" onclick="toggleCaja('${c.id}')">
+        <div class="caja-name">
+          <span class="caja-icon">
+            <div class="hanko-icon"><div class="hanko-circle"></div></div>
+          </span>
+          ${c.name}
+          ${c.desc ? `<span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:var(--gray);">${c.desc}</span>` : ''}
+        </div>
+        <span class="caja-items-count">${(c.items||[]).length} obj.</span>
+      </div>
+      <div class="caja-body" id="caja-body-${c.id}">
+        ${(c.items||[]).length === 0 ? '<div class="caja-item" style="color:var(--gray);font-size:12px;">— vacía —</div>' :
+          (c.items||[]).map((item,i) => {
+            const linked = item.adId ? ads.find(a=>a.id===item.adId) : null;
+            return `
+            <div class="caja-item">
+              <div class="caja-item-dot ${linked?'linked':''}"></div>
+              <div class="caja-item-name">${item.name}</div>
+              ${linked ? `<span class="caja-item-linked">→ ${linked.title}</span>` : ''}
+              <button class="icon-btn" onclick="removeItem('${c.id}',${i})" style="font-size:12px;">✕</button>
+            </div>
+          `}).join('')
+        }
+        <button class="caja-add-btn" onclick="openItemForm('${c.id}')">+ añadir objeto a la caja</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCaja(id) {
+  const body = document.getElementById('caja-body-'+id);
+  body.classList.toggle('open');
+}
+
+function openCajaForm() {
+  document.getElementById('cf-name').value = '';
+  document.getElementById('cf-desc').value = '';
+  document.getElementById('cajaFormOverlay').classList.add('open');
+}
+function closeCajaForm() {
+  document.getElementById('cajaFormOverlay').classList.remove('open');
+}
+function saveCaja() {
+  const name = document.getElementById('cf-name').value.trim();
+  if (!name) { alert('Nombre obligatorio'); return; }
+  cajas.push({ id: Date.now().toString(), name, desc: document.getElementById('cf-desc').value, items: [] });
+  save();
+  closeCajaForm();
+  renderAlmacen();
+}
+
+let currentCajaId = null;
+function openItemForm(cajaId) {
+  currentCajaId = cajaId;
+  document.getElementById('if-name').value = '';
+  const sel = document.getElementById('if-ad');
+  sel.innerHTML = '<option value="">— Sin vincular —</option>' +
+    ads.map(a=>`<option value="${a.id}">${a.title}</option>`).join('');
+  document.getElementById('itemFormOverlay').classList.add('open');
+}
+function closeItemForm() {
+  document.getElementById('itemFormOverlay').classList.remove('open');
+}
+function saveItem() {
+  const name = document.getElementById('if-name').value.trim();
+  if (!name) { alert('Nombre obligatorio'); return; }
+  const caja = cajas.find(c=>c.id===currentCajaId);
+  if (!caja) return;
+  const adId = document.getElementById('if-ad').value;
+  caja.items.push({ name, adId });
+  // Auto-assign caja to ad
+  if (adId) {
+    const ad = ads.find(a=>a.id===adId);
+    if (ad) ad.cajaId = currentCajaId;
+  }
+  save();
+  closeItemForm();
+  renderAlmacen();
+}
+function removeItem(cajaId, i) {
+  if (!confirm('¿Quitar objeto de la caja?')) return;
+  const caja = cajas.find(c=>c.id===cajaId);
+  if (!caja) return;
+  caja.items.splice(i, 1);
+  save();
+  renderAlmacen();
+}
+
+// ── Init ───────────────────────────────────────────────
+renderAds();
+</script>
 </body>
 </html>
