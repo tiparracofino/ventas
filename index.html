@@ -44,13 +44,9 @@
             opacity: 0.7;
         }
 
-        .lowercase { text-transform: lowercase !important; }
-
         input:focus, textarea:focus { font-size: 16px !important; }
         
-        /* Forzar minúsculas en todo el documento */
-        * { text-transform: lowercase; }
-        /* Exceptuando algunos elementos técnicos si fuera necesario, pero aquí aplicamos el deseo del usuario */
+        /* Eliminadas las reglas de minúsculas forzadas */
     </style>
 </head>
 <body>
@@ -79,10 +75,8 @@
         const App = () => {
             const [items, setItems] = useState(() => {
                 try {
-                    const saved = localStorage.getItem('kura_v10_data');
-                    return saved ? JSON.parse(saved) : [
-                        { id: 1, title: "ejemplo de objeto", price: "0", box: "caja inicial", desc: "descripción en minúsculas", sold: false, img: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=400" }
-                    ];
+                    const saved = localStorage.getItem('kura_v11_data');
+                    return saved ? JSON.parse(saved) : [];
                 } catch (e) { return []; }
             });
 
@@ -91,9 +85,10 @@
             const [selectedItem, setSelectedItem] = useState(null);
             const [search, setSearch] = useState('');
             const [copyStatus, setCopyStatus] = useState(null);
+            const [tempImg, setTempImg] = useState(null);
 
             useEffect(() => {
-                localStorage.setItem('kura_v10_data', JSON.stringify(items));
+                localStorage.setItem('kura_v11_data', JSON.stringify(items));
                 if (window.lucide) window.lucide.createIcons();
             }, [items, view, selectedBox, selectedItem]);
 
@@ -122,6 +117,17 @@
                 document.body.appendChild(downloadAnchorNode);
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
+            };
+
+            const handleImageChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setTempImg(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
             };
 
             if (view === 'home') return (
@@ -158,7 +164,7 @@
             return (
                 <div className="min-h-screen bg-white animate-fade-in safe-area-top safe-area-bottom">
                     <header className="px-6 py-8 border-b-[0.5px] border-black/5 flex justify-between items-center sticky top-0 bg-white/90 backdrop-blur-md z-30">
-                        <button onClick={() => { setView('home'); setSelectedBox(null); }} className="flex items-center gap-3 active:scale-95 transition-transform group">
+                        <button onClick={() => { setView('home'); setSelectedBox(null); setTempImg(null); }} className="flex items-center gap-3 active:scale-95 transition-transform group">
                             <Icon name="arrow-left" size={16} className="group-active:text-red-600" />
                             <span className="text-[10px] font-bold tracking-[0.3em] opacity-60">volver</span>
                         </button>
@@ -168,7 +174,7 @@
                     <main className="px-6 py-8 pb-32">
                         {view === 'boxes' && (
                             <div className="animate-fade-in">
-                                <h2 className="text-[9px] font-bold tracking-[0.4em] mb-12 opacity-20 italic">warehouse index</h2>
+                                <h2 className="text-[9px] font-bold tracking-[0.4em] mb-12 opacity-20 italic font-sans uppercase">warehouse index</h2>
                                 {boxes.length > 0 ? (
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-16">
                                         {boxes.map(box => (
@@ -181,13 +187,13 @@
                                                     <HankoFlagIcon />
                                                 </div>
                                                 <span className="text-[11px] font-medium tracking-[0.1em] opacity-80 mb-1">{box}</span>
-                                                <span className="text-[8px] opacity-20 tracking-widest">
+                                                <span className="text-[8px] opacity-20 tracking-widest uppercase">
                                                     {items.filter(i => i.box === box).length} objetos
                                                 </span>
                                             </button>
                                         ))}
                                     </div>
-                                ) : <p className="text-center py-24 opacity-20 text-[10px] tracking-[0.3em]">vacío</p>}
+                                ) : <p className="text-center py-24 opacity-20 text-[10px] tracking-[0.3em] uppercase">vacío</p>}
                             </div>
                         )}
 
@@ -200,7 +206,11 @@
                                 {items.filter(i => i.box === selectedBox).map(item => (
                                     <div key={item.id} onClick={() => setSelectedItem(item)} className="flex gap-6 items-center border-b border-black/5 pb-8">
                                         <div className="w-16 h-16 bg-neutral-50 border-[0.5px] border-black/5 overflow-hidden flex-shrink-0">
-                                            <img src={item.img} className={`w-full h-full object-cover grayscale transition-opacity duration-500 ${item.sold ? 'opacity-10' : ''}`} />
+                                            {item.img ? (
+                                                <img src={item.img} className={`w-full h-full object-cover grayscale transition-opacity duration-500 ${item.sold ? 'opacity-10' : ''}`} />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center opacity-10"><Icon name="camera" /></div>
+                                            )}
                                         </div>
                                         <div className="flex flex-col justify-center flex-grow">
                                             <h3 className={`text-[11px] font-medium tracking-widest mb-1 ${item.sold ? 'line-through opacity-20' : ''}`}>{item.title}</h3>
@@ -215,7 +225,10 @@
                             <div className="space-y-8 animate-fade-in">
                                 <input autoFocus type="text" placeholder="introduzca término..." className="w-full bg-transparent border-b-[0.5px] border-black/10 py-4 text-3xl font-serif italic focus:outline-none placeholder:opacity-10" value={search} onChange={(e) => setSearch(e.target.value)} />
                                 <div className="space-y-4">
-                                    {items.filter(i => i.title.toLowerCase().includes(search.toLowerCase()) || i.box.toLowerCase().includes(search.toLowerCase())).map(item => (
+                                    {items.filter(i => 
+                                        i.title.toLowerCase().includes(search.toLowerCase()) || 
+                                        i.box.toLowerCase().includes(search.toLowerCase())
+                                    ).map(item => (
                                         <div key={item.id} onClick={() => setSelectedItem(item)} className="flex justify-between items-center py-6 border-b-[0.5px] border-black/5">
                                             <div>
                                                 <p className="text-[10px] font-medium tracking-widest">{item.title}</p>
@@ -234,35 +247,55 @@
                                 const fd = new FormData(e.target);
                                 const newItem = {
                                     id: Date.now(),
-                                    title: fd.get('title').toLowerCase(),
+                                    title: fd.get('title'), // Ya no fuerza minúsculas
                                     price: fd.get('price'),
-                                    box: fd.get('box').toLowerCase() || "sin caja",
-                                    desc: fd.get('desc').toLowerCase(), 
+                                    box: fd.get('box') || "sin caja",
+                                    desc: fd.get('desc'), 
                                     sold: false,
-                                    img: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=400"
+                                    img: tempImg
                                 };
                                 setItems([newItem, ...items]);
+                                setTempImg(null);
                                 setView('home');
                             }} className="space-y-12 py-4 animate-fade-in">
-                                <div className="flex flex-col gap-3">
-                                    <label className="text-[8px] font-bold tracking-[0.5em] opacity-30 italic">nombre del objeto</label>
-                                    <input name="title" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl tracking-tight font-light" placeholder="ej. cámara analógica" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-10">
+                                <div className="space-y-6">
                                     <div className="flex flex-col gap-3">
-                                        <label className="text-[8px] font-bold tracking-[0.5em] opacity-30 italic">precio (€)</label>
-                                        <input name="price" type="number" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="0" />
+                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">nombre del objeto</label>
+                                        <input name="title" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl tracking-tight font-light" placeholder="Título del anuncio" />
+                                    </div>
+                                    
+                                    {/* Selector de Imagen Real */}
+                                    <div className="flex flex-col gap-3">
+                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">fotografía del objeto</label>
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-black/20 cursor-pointer overflow-hidden bg-neutral-50 active:bg-neutral-100 transition-colors">
+                                                {tempImg ? (
+                                                    <img src={tempImg} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Icon name="camera" className="opacity-20" />
+                                                )}
+                                                <input type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="hidden" />
+                                            </label>
+                                            <span className="text-[9px] opacity-30 max-w-[150px]">Pulsa para usar la cámara o elegir una foto.</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-10">
+                                        <div className="flex flex-col gap-3">
+                                            <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">precio (€)</label>
+                                            <input name="price" type="number" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="0" />
+                                        </div>
+                                        <div className="flex flex-col gap-3">
+                                            <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">caja / id</label>
+                                            <input name="box" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="Nombre de la caja" />
+                                        </div>
                                     </div>
                                     <div className="flex flex-col gap-3">
-                                        <label className="text-[8px] font-bold tracking-[0.5em] opacity-30 italic">caja / id</label>
-                                        <input name="box" required className="border-b-[0.5px] border-black py-3 focus:outline-none text-xl font-light" placeholder="caja-01" />
+                                        <label className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 italic">descripción wallapop</label>
+                                        <textarea name="desc" rows="4" className="border-b-[0.5px] border-black py-3 focus:outline-none text-sm leading-relaxed resize-none font-light" placeholder="Escribe los detalles tal como quieres que se lean..." />
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-3">
-                                    <label className="text-[8px] font-bold tracking-[0.5em] opacity-30 italic">descripción wallapop</label>
-                                    <textarea name="desc" rows="4" className="border-b-[0.5px] border-black py-3 focus:outline-none text-sm leading-relaxed resize-none font-light" placeholder="detalles para copiar..." />
-                                </div>
-                                <button className="w-full bg-black text-white text-[10px] font-bold tracking-[0.5em] py-6 shadow-sm active:bg-red-600 transition-colors">guardar registro</button>
+                                <button className="w-full bg-black text-white text-[10px] font-bold uppercase tracking-[0.5em] py-6 shadow-sm active:bg-red-600 transition-colors">guardar registro</button>
                             </form>
                         )}
                     </main>
@@ -270,30 +303,34 @@
                     {selectedItem && (
                         <div className="fixed inset-0 z-50 bg-white flex flex-col animate-fade-in overflow-y-auto pb-24">
                             <header className="px-6 py-8 border-b-[0.5px] border-black/5 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur-sm">
-                                <span className="text-[9px] font-bold tracking-[0.4em] text-red-600 italic">ficha de registro</span>
+                                <span className="text-[9px] font-bold tracking-[0.4em] text-red-600 italic uppercase">ficha de registro</span>
                                 <button onClick={() => setSelectedItem(null)} className="p-3 border-[0.5px] border-black/10 rounded-full active:bg-neutral-50"><Icon name="x" size={18}/></button>
                             </header>
                             <div className="px-6 py-10 max-w-md mx-auto w-full space-y-12">
                                 <div className="aspect-square bg-neutral-50 border-[0.5px] border-black/5 overflow-hidden">
-                                    <img src={selectedItem.img} className="w-full h-full object-cover grayscale brightness-95" />
+                                    {selectedItem.img ? (
+                                        <img src={selectedItem.img} className="w-full h-full object-cover grayscale brightness-95" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center opacity-10"><Icon name="image" size={48} /></div>
+                                    )}
                                 </div>
                                 <div className="space-y-4 text-center">
-                                    <span className="text-[10px] font-medium tracking-[0.4em] text-red-600 italic block font-sans">{selectedItem.box}</span>
+                                    <span className="text-[10px] font-medium tracking-[0.4em] text-red-600 italic block font-sans uppercase">{selectedItem.box}</span>
                                     <h2 className="text-4xl font-serif italic tracking-tighter leading-tight mt-2">{selectedItem.title}</h2>
                                 </div>
                                 <div className="py-12 border-y-[0.5px] border-black/10 space-y-10">
                                     <div className="flex justify-between items-baseline">
-                                        <span className="text-[8px] tracking-[0.4em] opacity-20 font-bold italic">borrador wallapop</span>
+                                        <span className="text-[8px] tracking-[0.4em] opacity-20 font-bold italic uppercase">borrador wallapop</span>
                                         <span className="text-3xl font-light text-red-600 font-serif">{selectedItem.price} €</span>
                                     </div>
                                     <p className="text-sm leading-relaxed font-normal tracking-wide text-black/60">
                                         {selectedItem.desc || "sin descripción."}
                                     </p>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={() => handleCopy(selectedItem.title, 'title')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'title' ? 'bg-black text-white' : ''}`}>
+                                        <button onClick={() => handleCopy(selectedItem.title, 'title')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'title' ? 'bg-black text-white' : ''}`}>
                                             {copyStatus === 'title' ? <Icon name="check" size={12} /> : <Icon name="copy" size={12} />} título
                                         </button>
-                                        <button onClick={() => handleCopy(selectedItem.desc, 'desc')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'desc' ? 'bg-black text-white' : ''}`}>
+                                        <button onClick={() => handleCopy(selectedItem.desc, 'desc')} className={`border-[0.5px] border-black py-4 text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all ${copyStatus === 'desc' ? 'bg-black text-white' : ''}`}>
                                             {copyStatus === 'desc' ? <Icon name="check" size={12} /> : <Icon name="copy" size={12} />} texto
                                         </button>
                                     </div>
@@ -302,7 +339,7 @@
                                     <button onClick={() => {
                                         setItems(items.map(i => i.id === selectedItem.id ? {...i, sold: !i.sold} : i));
                                         setSelectedItem(null);
-                                    }} className={`w-full py-6 text-[10px] font-bold tracking-[0.4em] border-[0.5px] transition-colors ${selectedItem.sold ? 'border-black text-black' : 'bg-red-600 border-red-600 text-white'}`}>
+                                    }} className={`w-full py-6 text-[10px] font-bold uppercase tracking-[0.4em] border-[0.5px] transition-colors ${selectedItem.sold ? 'border-black text-black' : 'bg-red-600 border-red-600 text-white'}`}>
                                         {selectedItem.sold ? 'devolver al inventario' : 'marcar como vendido'}
                                     </button>
                                     <button onClick={() => {
@@ -310,7 +347,7 @@
                                             setItems(items.filter(i => i.id !== selectedItem.id));
                                             setSelectedItem(null);
                                         }
-                                    }} className="text-[9px] font-bold tracking-[0.3em] opacity-20 flex items-center gap-2 active:text-red-600">
+                                    }} className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-20 flex items-center gap-2 active:text-red-600">
                                         <Icon name="trash-2" size={12} /> borrar registro
                                     </button>
                                 </div>
