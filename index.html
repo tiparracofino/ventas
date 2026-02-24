@@ -43,6 +43,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative; /* Añadido para posicionar los botones centrales */
   }
   .logo {
     display: flex;
@@ -69,6 +70,32 @@
     display: inline-block;
     margin-left: 4px;
     vertical-align: middle;
+  }
+
+  /* Botones de Exportar/Importar en el centro */
+  .header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+  }
+  .io-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.6);
+    font-size: 8px;
+    padding: 4px 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .io-btn:active {
+    color: var(--paper);
+    border-color: var(--paper);
   }
 
   /* Nav */
@@ -678,8 +705,16 @@
   <div class="header-inner">
     <div class="logo">
       <span class="logo-jp">売り場<span class="logo-dot"></span></span>
-      <span class="logo-sub">Goodbye Things · Organizer</span>
+      <span class="logo-sub">Goodbye Things</span>
     </div>
+    
+    <!-- Botones de Exportar/Importar -->
+    <div class="header-center">
+      <button class="io-btn" onclick="exportData()">↓ exp</button>
+      <button class="io-btn" onclick="document.getElementById('importFile').click()">↑ imp</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+
     <div style="font-size:11px;letter-spacing:2px;color:var(--gray);text-align:right;">
       <div style="color:var(--paper);font-family:'Noto Serif JP',serif;font-size:13px;">手放す</div>
       <div>dejar ir</div>
@@ -892,6 +927,46 @@ let currentFilter = 'Todos';
 function save() {
   localStorage.setItem('uriba_ads', JSON.stringify(ads));
   localStorage.setItem('uriba_cajas', JSON.stringify(cajas));
+}
+
+// ── Import/Export Logic ────────────────────────────────
+function exportData() {
+  const data = { ads, cajas };
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", `uriba_backup_${new Date().toISOString().slice(0,10)}.json`);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.ads && data.cajas) {
+        ads = data.ads;
+        cajas = data.cajas;
+        save();
+        renderAds();
+        if (document.getElementById('sec-almacen').style.display === 'block') {
+          renderAlmacen();
+        }
+        alert('Datos importados correctamente / データがインポートされました');
+      } else {
+        alert('El archivo no parece ser un backup válido de Uriba.');
+      }
+    } catch (err) {
+      alert('Error al leer el archivo JSON.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // Reset file input
 }
 
 // ── Nav ────────────────────────────────────────────────
