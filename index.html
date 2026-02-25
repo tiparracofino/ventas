@@ -44,7 +44,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: relative; /* Añadido para posicionar los botones centrales */
+    position: relative;
   }
   .logo {
     display: flex;
@@ -453,11 +453,26 @@
     border-radius: 50%;
   }
 
+  .caja-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
   .caja-items-count {
     font-size: 11px;
     color: var(--gray);
     letter-spacing: 1px;
   }
+  .caja-total {
+    font-size: 10px;
+    color: #ffffff;
+    opacity: 0.9;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    font-family: 'Noto Serif JP', serif;
+  }
+
   .caja-body {
     padding: 0;
     display: none;
@@ -1071,7 +1086,18 @@ function toggleWallapop(id) {
 function copyWallapop(id) {
   const ad = ads.find(a=>a.id===id);
   if (!ad) return;
-  navigator.clipboard.writeText(generateWallapopText(ad));
+  
+  // Extraemos exclusivamente la descripción real del anuncio
+  const textToCopy = ad.desc || 'Sin descripción guardada.';
+  
+  // Método seguro de copiado para iFrames y móviles Safari
+  const el = document.createElement('textarea');
+  el.value = textToCopy;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+
   const btn = event.target;
   btn.textContent = '✓ Copiado';
   setTimeout(()=>btn.textContent='Copiar texto', 2000);
@@ -1261,6 +1287,8 @@ function renderAlmacen() {
   
   let html = '';
 
+  const sinLugarTotal = unassignedAds.reduce((sum, ad) => sum + (parseFloat(ad.price) || 0), 0);
+
   // Renderizamos la caja virtual "SIN LUGAR" para objetos sueltos
   html += `
     <div class="caja-card">
@@ -1274,7 +1302,10 @@ function renderAlmacen() {
           SIN LUGAR
           <span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:rgba(255,255,255,0.5);">Objetos sueltos</span>
         </div>
-        <span class="caja-items-count">${unassignedAds.length} obj.</span>
+        <div class="caja-header-right">
+          <span class="caja-items-count">${unassignedAds.length} obj.</span>
+          ${sinLugarTotal > 0 ? `<span class="caja-total">${sinLugarTotal} €</span>` : ''}
+        </div>
       </div>
       <div class="caja-body" id="caja-body-sin-lugar">
         ${unassignedAds.length === 0 ? '<div class="caja-item" style="color:var(--gray);font-size:12px;">— no hay objetos sueltos —</div>' :
@@ -1292,7 +1323,17 @@ function renderAlmacen() {
   `;
 
   // Renderizamos el resto de cajas reales
-  html += cajas.map(c => `
+  html += cajas.map(c => {
+    // Calculamos la suma del precio de todos los objetos en esta caja
+    const boxTotal = (c.items||[]).reduce((sum, item) => {
+      if(item.adId) {
+        const ad = ads.find(a => a.id === item.adId);
+        if(ad) return sum + (parseFloat(ad.price) || 0);
+      }
+      return sum;
+    }, 0);
+
+    return `
     <div class="caja-card">
       <div class="caja-header" onclick="toggleCaja('${c.id}')">
         <div class="caja-name">
@@ -1302,7 +1343,10 @@ function renderAlmacen() {
           ${c.name}
           ${c.desc ? `<span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:var(--gray);">${c.desc}</span>` : ''}
         </div>
-        <span class="caja-items-count">${(c.items||[]).length} obj.</span>
+        <div class="caja-header-right">
+          <span class="caja-items-count">${(c.items||[]).length} obj.</span>
+          ${boxTotal > 0 ? `<span class="caja-total">${boxTotal} €</span>` : ''}
+        </div>
       </div>
       <div class="caja-body" id="caja-body-${c.id}">
         ${(c.items||[]).length === 0 ? '<div class="caja-item" style="color:var(--gray);font-size:12px;">— vacía —</div>' :
@@ -1320,7 +1364,7 @@ function renderAlmacen() {
         <button class="caja-add-btn" onclick="openItemForm('${c.id}')">+ añadir objeto a la caja</button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 
   el.innerHTML = html;
 }
@@ -1389,3 +1433,5 @@ renderAds();
 </script>
 </body>
 </html>
+
+
