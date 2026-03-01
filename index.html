@@ -403,7 +403,7 @@
     display: flex;
     gap: 10px;
     margin-top: 20px;
-    justify-content: flex-end;
+    align-items: center;
   }
 
   /* Almacén */
@@ -451,26 +451,6 @@
     height: 8px;
     background-color: var(--red);
     border-radius: 50%;
-  }
-
-  .caja-header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-  }
-  .caja-items-count {
-    font-size: 11px;
-    color: var(--gray);
-    letter-spacing: 1px;
-  }
-  .caja-total {
-    font-size: 10px;
-    color: #ffffff;
-    opacity: 0.9;
-    font-weight: 400;
-    letter-spacing: 0.5px;
-    font-family: 'Noto Serif JP', serif;
   }
 
   .caja-body {
@@ -873,7 +853,7 @@
       </label>
     </div>
 
-    <div class="form-actions">
+    <div class="form-actions" style="justify-content: flex-end;">
       <button class="btn-ghost" onclick="closeAdForm()">Cancelar</button>
       <button class="btn-primary" onclick="saveAd()">Guardar 保存</button>
     </div>
@@ -884,7 +864,7 @@
 <div class="form-overlay" id="cajaFormOverlay">
   <div class="form-panel">
     <div class="form-title">
-      <span>箱 · Nueva Caja</span>
+      <span id="cajaFormTitle">箱 · Nueva Caja</span>
       <button class="icon-btn" onclick="closeCajaForm()" style="font-size:20px;">✕</button>
     </div>
     <div class="form-grid">
@@ -897,9 +877,12 @@
         <input type="text" id="cf-desc" placeholder="Ej: Junto a la ventana">
       </label>
     </div>
-    <div class="form-actions">
-      <button class="btn-ghost" onclick="closeCajaForm()">Cancelar</button>
-      <button class="btn-primary" onclick="saveCaja()">Crear Caja</button>
+    <div class="form-actions" style="justify-content: space-between; width: 100%;">
+      <button class="btn-ghost" id="cf-delete-btn" onclick="deleteCaja()" style="color: var(--red); border-color: transparent; padding-left: 0; display: none;">Eliminar</button>
+      <div style="display: flex; gap: 10px; margin-left: auto;">
+        <button class="btn-ghost" onclick="closeCajaForm()">Cancelar</button>
+        <button class="btn-primary" onclick="saveCaja()">Guardar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -923,7 +906,7 @@
         </select>
       </label>
     </div>
-    <div class="form-actions">
+    <div class="form-actions" style="justify-content: flex-end;">
       <button class="btn-ghost" onclick="closeItemForm()">Cancelar</button>
       <button class="btn-primary" onclick="saveItem()">Añadir</button>
     </div>
@@ -1302,9 +1285,13 @@ function renderAlmacen() {
           SIN LUGAR
           <span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:rgba(255,255,255,0.5);">Objetos sueltos</span>
         </div>
-        <div class="caja-header-right">
-          <span class="caja-items-count">${unassignedAds.length} obj.</span>
-          ${sinLugarTotal > 0 ? `<span class="caja-total">${sinLugarTotal} €</span>` : ''}
+        <div class="caja-header-right" style="flex-direction: row; align-items: center; gap: 12px;">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+            <span class="caja-items-count">${unassignedAds.length} obj.</span>
+            ${sinLugarTotal > 0 ? `<span class="caja-total">${sinLugarTotal} €</span>` : ''}
+          </div>
+          <!-- Espacio vacío para mantener el alineamiento igual que las otras cajas -->
+          <div style="width: 24px;"></div>
         </div>
       </div>
       <div class="caja-body" id="caja-body-sin-lugar">
@@ -1343,9 +1330,12 @@ function renderAlmacen() {
           ${c.name}
           ${c.desc ? `<span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:var(--gray);">${c.desc}</span>` : ''}
         </div>
-        <div class="caja-header-right">
-          <span class="caja-items-count">${(c.items||[]).length} obj.</span>
-          ${boxTotal > 0 ? `<span class="caja-total">${boxTotal} €</span>` : ''}
+        <div class="caja-header-right" style="flex-direction: row; align-items: center; gap: 12px;">
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+            <span class="caja-items-count">${(c.items||[]).length} obj.</span>
+            ${boxTotal > 0 ? `<span class="caja-total">${boxTotal} €</span>` : ''}
+          </div>
+          <button class="icon-btn" onclick="event.stopPropagation(); editCaja('${c.id}')" title="Editar Detalles de Caja" style="color: rgba(255,255,255,0.7); font-size: 16px; padding: 4px;">✎</button>
         </div>
       </div>
       <div class="caja-body" id="caja-body-${c.id}">
@@ -1375,20 +1365,96 @@ function toggleCaja(id) {
 }
 
 function openCajaForm() {
+  editingCajaId = null;
   document.getElementById('cf-name').value = '';
   document.getElementById('cf-desc').value = '';
+  document.getElementById('cajaFormTitle').textContent = '箱 · Nueva Caja';
+  document.getElementById('cf-delete-btn').style.display = 'none';
   document.getElementById('cajaFormOverlay').classList.add('open');
 }
+
+function editCaja(id) {
+  editingCajaId = id;
+  const c = cajas.find(x => x.id === id);
+  if (!c) return;
+  
+  document.getElementById('cf-name').value = c.name;
+  document.getElementById('cf-desc').value = c.desc || '';
+  document.getElementById('cajaFormTitle').textContent = '箱 · Editar Caja';
+  document.getElementById('cf-delete-btn').style.display = 'block';
+  
+  document.getElementById('cajaFormOverlay').classList.add('open');
+}
+
 function closeCajaForm() {
   document.getElementById('cajaFormOverlay').classList.remove('open');
 }
+
 function saveCaja() {
   const name = document.getElementById('cf-name').value.trim();
   if (!name) { alert('Nombre obligatorio'); return; }
-  cajas.push({ id: Date.now().toString(), name, desc: document.getElementById('cf-desc').value, items: [] });
+  
+  if (editingCajaId) {
+    // Editar caja existente
+    const c = cajas.find(x => x.id === editingCajaId);
+    if (c) {
+      c.name = name;
+      c.desc = document.getElementById('cf-desc').value;
+    }
+  } else {
+    // Crear nueva
+    cajas.push({ id: Date.now().toString(), name, desc: document.getElementById('cf-desc').value, items: [] });
+  }
+  
   save();
   closeCajaForm();
   renderAlmacen();
+  renderAds(); // Para actualizar los nombres de las cajas en la vista de anuncios
+}
+
+function deleteCaja() {
+  if (!editingCajaId) return;
+  if (!confirm('¿Eliminar esta caja permanentemente? Los objetos que contenga pasarán a estar "SIN LUGAR".')) return;
+  
+  const cajaToDelete = cajas.find(c => c.id === editingCajaId);
+  
+  // SOLUCIÓN AL BUG 1: Si hay objetos en la caja sin anuncio vinculado, 
+  // los convertimos en un "Anuncio Borrador" para no perderlos al borrar la caja.
+  if (cajaToDelete && cajaToDelete.items) {
+    cajaToDelete.items.forEach(item => {
+      if (!item.adId) {
+        // Creamos un ID único seguro
+        const newAdId = Date.now().toString() + Math.random().toString(36).substring(2, 6);
+        ads.unshift({ // unshift lo pone al inicio de la lista
+          id: newAdId,
+          title: item.name,
+          price: '',
+          category: 'Otro',
+          condition: 'Buen estado',
+          desc: 'Recuperado de la caja eliminada: ' + cajaToDelete.name,
+          status: 'borrador',
+          cajaId: '', // Pasa a estar "Sin lugar"
+          photos: [],
+          createdAt: Date.now()
+        });
+      }
+    });
+  }
+  
+  // Eliminar la caja en sí
+  cajas = cajas.filter(c => c.id !== editingCajaId);
+  
+  // Desenlazar los anuncios que estaban en esta caja
+  ads.forEach(a => {
+    if (a.cajaId === editingCajaId) {
+      a.cajaId = '';
+    }
+  });
+  
+  save();
+  closeCajaForm();
+  renderAlmacen();
+  renderAds();
 }
 
 let currentCajaId = null;
@@ -1423,6 +1489,14 @@ function removeItem(cajaId, i) {
   if (!confirm('¿Quitar objeto de la caja?')) return;
   const caja = cajas.find(c=>c.id===cajaId);
   if (!caja) return;
+  
+  // SOLUCIÓN AL BUG 2: Desenlazar explícitamente el anuncio para que vuelva a "SIN LUGAR"
+  const item = caja.items[i];
+  if (item && item.adId) {
+    const ad = ads.find(a => a.id === item.adId);
+    if (ad) ad.cajaId = '';
+  }
+  
   caja.items.splice(i, 1);
   save();
   renderAlmacen();
