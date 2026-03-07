@@ -226,7 +226,15 @@
   </section>
 
   <section id="sec-almacen" style="display:none;">
-    <div class="section-head"><h2>倉庫</h2><span>almacén de cajas</span></div>
+    <div class="section-head" style="justify-content: space-between; display: flex; width: 100%;">
+      <div style="display: flex; align-items: baseline; gap: 12px;">
+        <h2>倉庫</h2><span>almacén de cajas</span>
+      </div>
+      <div style="text-align: right;">
+        <span id="almacenGrandTotal" style="font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: 0;">0€</span>
+        <span style="font-size: 9px; display: block; color: var(--gray); letter-spacing: 1px; text-transform: uppercase;">Total</span>
+      </div>
+    </div>
     <div id="cajaList"></div>
     <div id="emptyCajas" class="empty" style="display:none;"><span class="empty-jp">箱</span><p>Sin cajas aún</p></div>
     <div style="margin-top:16px;">
@@ -618,7 +626,14 @@ function renderAlmacen() {
   const el = document.getElementById('cajaList');
   const unassignedAds = ads.filter(a => !a.cajaId);
   document.getElementById('emptyCajas').style.display = (cajas.length === 0 && unassignedAds.length === 0) ? 'block' : 'none';
+  
+  // Calcular totales
   const sinLugarTotal = unassignedAds.reduce((sum, ad) => sum + (parseFloat(ad.price) || 0), 0);
+  const grandTotal = ads.reduce((sum, ad) => sum + (parseFloat(ad.price) || 0), 0);
+  
+  // Actualizar el texto del dinero total general en la cabecera
+  const grandTotalEl = document.getElementById('almacenGrandTotal');
+  if (grandTotalEl) grandTotalEl.textContent = grandTotal + '€';
 
   let html = `
     <div class="caja-card">
@@ -678,7 +693,6 @@ function renderAlmacen() {
             <div class="caja-item">
               <div class="caja-item-dot ${linked?'linked':''}"></div>
               <div class="caja-item-name">${item.name}</div>
-              ${linked ? `<span class="caja-item-linked">→ ${linked.title}</span>` : ''}
               <div style="display:flex; gap:4px; align-items: center;">
                 <button class="icon-btn" onclick="event.stopPropagation(); ${linked ? `editAd('${item.adId}')` : `openItemForm('${c.id}', ${i})`}" style="font-size:14px;" title="Editar">✎</button>
                 <button class="icon-btn" onclick="event.stopPropagation(); removeItem('${c.id}',${i})" style="font-size:14px; color:var(--red);" title="Eliminar">✕</button>
@@ -815,3 +829,5 @@ function removeItem(cajaId, i) {
 
 renderAds();
 </script>
+</body>
+</html>
