@@ -78,6 +78,9 @@
   .btn-ghost { background: none; border: 1px solid var(--border); padding: 8px 16px; font-family: 'Noto Sans JP', sans-serif; font-size: 11px; letter-spacing: 1px; cursor: pointer; color: var(--ink); transition: border-color 0.2s; }
   .btn-ghost:active { border-color: var(--ink); }
 
+  .search-bar { width: 100%; padding: 12px 16px; font-size: 14px; border: 1px solid var(--border); background: white; margin-bottom: 20px; outline: none; transition: border-color 0.2s; font-family: 'Noto Sans JP', sans-serif; border-radius: 0; -webkit-appearance: none;}
+  .search-bar:focus { border-color: var(--ink); }
+
   .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
   .section-head h2 { font-family: 'Noto Serif JP', serif; font-size: 20px; font-weight: 400; }
   .section-head span { font-size: 11px; letter-spacing: 2px; color: var(--gray); text-transform: uppercase; }
@@ -92,12 +95,13 @@
   .ad-image-slot { width: 90px; min-height: 90px; background: #f0ece6; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--border); overflow: hidden; position: relative; }
   .ad-image-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
 
-  .ad-content { padding: 12px 12px 12px 14px; flex: 1; min-width: 0; }
+  .ad-content { padding: 12px 12px 12px 14px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .ad-title { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 400; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ad-price { font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: -0.5px; }
-  .ad-price span { font-size: 11px; font-weight: 300; color: var(--gray); }
+  .ad-price { font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: -0.5px; display: flex; align-items: baseline; gap: 6px; }
+  .ad-price span { font-size: 11px; font-weight: 300; color: var(--gray); letter-spacing: 0; }
   .ad-desc { font-size: 11px; color: var(--gray); margin-top: 4px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .ad-meta { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+  
   .status-chip { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px; border: 1px solid; }
   .status-chip.activo { color: var(--red); border-color: var(--red); }
   .status-chip.vendido { color: #27ae60; border-color: #27ae60; }
@@ -136,7 +140,6 @@
   .caja-item-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
   .caja-item-dot.linked { background: var(--red); }
   .caja-item-name { flex: 1; }
-  .caja-item-linked { font-size: 10px; color: var(--red); letter-spacing: 1px; text-transform: uppercase; }
   .caja-add-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: none; border: none; width: 100%; text-align: left; font-size: 11px; letter-spacing: 1px; color: var(--gray); cursor: pointer; border-top: 1px dashed var(--border); font-family: 'Noto Sans JP', sans-serif; text-transform: uppercase; }
   .caja-add-btn:active { color: var(--red); background: #fdfdfd; }
 
@@ -144,7 +147,7 @@
   .empty-jp { font-family: 'Noto Serif JP', serif; font-size: 36px; display: block; margin-bottom: 8px; opacity: 0.2; }
   .empty p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; }
 
-  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-bottom: 24px; border: 1px solid var(--border); }
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-bottom: 20px; border: 1px solid var(--border); }
   .stat-cell { background: white; padding: 14px 12px; text-align: center; }
   .stat-val { font-family: 'Noto Serif JP', serif; font-size: 22px; display: block; color: var(--red); }
   .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
@@ -217,7 +220,9 @@
 <main>
   <section id="sec-anuncios">
     <div id="statsBar" class="stats-bar"></div>
+    <input type="text" class="search-bar" id="searchAdsInput" placeholder="🔍 Buscar por nombre o categoría..." oninput="setSearch(this.value)">
     <div class="filter-row" id="filterRow"></div>
+    
     <div class="section-head">
       <h2>広告</h2><span>anuncios</span><span class="count-badge" id="adCount">0</span>
     </div>
@@ -232,7 +237,7 @@
       </div>
       <div style="text-align: right;">
         <span id="almacenGrandTotal" style="font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: 0;">0€</span>
-        <span style="font-size: 9px; display: block; color: var(--gray); letter-spacing: 1px; text-transform: uppercase;">Total</span>
+        <span style="font-size: 9px; display: block; color: var(--gray); letter-spacing: 1px; text-transform: uppercase;">Valor Stock</span>
       </div>
     </div>
     <div id="cajaList"></div>
@@ -254,7 +259,13 @@
     <div class="form-grid">
       <label>Título del artículo<input type="text" id="f-title" placeholder="Ej: Cámara analógica Nikon FM2"></label>
       <div class="form-row">
-        <label>Precio (€)<input type="number" id="f-price" placeholder="0"></label>
+        <label>Precio Unitario (€)<input type="number" id="f-price" placeholder="0"></label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <label>Disp.<input type="number" id="f-qty" value="1" min="0"></label>
+          <label>Vendidos<input type="number" id="f-soldQty" value="0" min="0"></label>
+        </div>
+      </div>
+      <div class="form-row">
         <label>Categoría
           <select id="f-cat">
             <option value="Tecnología">Tecnología</option>
@@ -267,15 +278,15 @@
             <option value="Otro">Otro</option>
           </select>
         </label>
+        <label>Estado del artículo
+          <select id="f-condition">
+            <option value="Como nuevo">Como nuevo</option>
+            <option value="Muy buen estado">Muy buen estado</option>
+            <option value="Buen estado">Buen estado</option>
+            <option value="Aceptable">Aceptable</option>
+          </select>
+        </label>
       </div>
-      <label>Estado del artículo
-        <select id="f-condition">
-          <option value="Como nuevo">Como nuevo</option>
-          <option value="Muy buen estado">Muy buen estado</option>
-          <option value="Buen estado">Buen estado</option>
-          <option value="Aceptable">Aceptable</option>
-        </select>
-      </label>
       <label>Descripción para Wallapop<textarea id="f-desc" placeholder="Describe el artículo con honestidad. Medidas, defectos, motivo de venta..."></textarea></label>
       <div class="form-row">
         <label>Estado de venta
@@ -352,6 +363,16 @@ let editingAdId = null;
 let editingCajaId = null;
 let currentPhotos = []; 
 let currentFilter = 'Todos';
+let searchQuery = '';
+
+// Helper para obtener stock exacto y compatibilidad con versiones antiguas
+function getAdStock(ad) {
+  let q = parseInt(ad.qty);
+  if (isNaN(q)) q = ad.status === 'vendido' ? 0 : 1;
+  let sq = parseInt(ad.soldQty);
+  if (isNaN(sq)) sq = (ad.status === 'vendido' && q === 0) ? 1 : 0;
+  return { qty: q, soldQty: sq };
+}
 
 function save() {
   localStorage.setItem('uriba_ads', JSON.stringify(ads));
@@ -381,9 +402,7 @@ function importData(event) {
         cajas = data.cajas;
         save();
         renderAds();
-        if (document.getElementById('sec-almacen').style.display === 'block') {
-          renderAlmacen();
-        }
+        if (document.getElementById('sec-almacen').style.display === 'block') renderAlmacen();
         alert('Datos importados correctamente / データがインポートされました');
       } else {
         alert('El archivo no parece ser un backup válido de Uriba.');
@@ -408,11 +427,12 @@ function showSection(id) {
 }
 
 function renderStats() {
-  const total = ads.length;
-  const vendidos = ads.filter(a=>a.status==='vendido').length;
-  const ganancias = ads.filter(a=>a.status==='vendido').reduce((s,a)=>s+(parseFloat(a.price)||0),0);
+  const disponibles = ads.reduce((s, a) => s + getAdStock(a).qty, 0);
+  const vendidos = ads.reduce((s, a) => s + getAdStock(a).soldQty, 0);
+  const ganancias = ads.reduce((s, a) => s + ((parseFloat(a.price) || 0) * getAdStock(a).soldQty), 0);
+
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat-cell"><span class="stat-val">${total}</span><span class="stat-label">artículos</span></div>
+    <div class="stat-cell"><span class="stat-val">${disponibles}</span><span class="stat-label">disp.</span></div>
     <div class="stat-cell"><span class="stat-val">${vendidos}</span><span class="stat-label">vendidos</span></div>
     <div class="stat-cell"><span class="stat-val">${ganancias.toFixed(0)}€</span><span class="stat-label">ganados</span></div>
   `;
@@ -426,11 +446,38 @@ function renderFilters() {
 }
 
 function setFilter(cat) { currentFilter = cat; renderAds(); }
+function setSearch(query) { searchQuery = query.toLowerCase(); renderAds(); }
+
+function sellOneItem(id) {
+  const ad = ads.find(a => a.id === id);
+  if (!ad) return;
+  
+  const stock = getAdStock(ad);
+  
+  if (stock.qty > 0) {
+    ad.qty = stock.qty - 1;
+    ad.soldQty = stock.soldQty + 1;
+    if (ad.qty === 0) ad.status = 'vendido';
+  }
+  
+  save(); 
+  renderAds();
+  if (document.getElementById('sec-almacen').style.display === 'block') renderAlmacen();
+}
 
 function renderAds() {
   renderStats();
   renderFilters();
-  const filtered = currentFilter==='Todos' ? ads : ads.filter(a=>a.category===currentFilter);
+  
+  let filtered = currentFilter === 'Todos' ? ads : ads.filter(a=>a.category===currentFilter);
+  if (searchQuery) {
+    filtered = filtered.filter(a => 
+      (a.title && a.title.toLowerCase().includes(searchQuery)) || 
+      (a.category && a.category.toLowerCase().includes(searchQuery)) ||
+      (a.desc && a.desc.toLowerCase().includes(searchQuery))
+    );
+  }
+  
   document.getElementById('adCount').textContent = filtered.length;
   const el = document.getElementById('adList');
   document.getElementById('emptyAds').style.display = filtered.length ? 'none' : 'block';
@@ -438,19 +485,34 @@ function renderAds() {
   el.innerHTML = filtered.map(ad => {
     const img = ad.photos && ad.photos[0] ? `<img src="${ad.photos[0]}" alt="">` : '📸';
     const cajaName = ad.cajaId ? (cajas.find(c=>c.id===ad.cajaId)||{name:'?'}).name : '';
+    
+    const { qty: currentQty, soldQty } = getAdStock(ad);
+    
     return `
     <div class="ad-card ${ad.status}">
       <div class="ad-card-accent"></div>
       <div class="ad-image-slot">${img}</div>
       <div class="ad-content">
         <div class="ad-title">${ad.title || 'Sin título'}</div>
-        <div class="ad-price">${ad.price ? ad.price+'€' : '—'} <span>· ${ad.condition||''}</span></div>
+        <div class="ad-price">
+          ${ad.price ? ad.price+'€' : '—'} 
+          ${currentQty > 1 ? `<span style="font-size: 14px; font-weight: 400; color: var(--ink);">x${currentQty}</span>` : ''}
+          <span>· ${ad.condition||''}</span>
+        </div>
         <div class="ad-desc">${ad.desc||''}</div>
         <div class="ad-meta">
           <span class="status-chip ${ad.status}">${ad.status}</span>
+          ${currentQty > 0 ? `<span class="cat-chip">Stock: ${currentQty}</span>` : ''}
+          ${soldQty > 0 ? `<span class="cat-chip" style="color:#27ae60; border-color:#27ae60;">Vendidos: ${soldQty}</span>` : ''}
           <span class="cat-chip">${ad.category||''}</span>
           ${cajaName ? `<span class="cat-chip">📦 ${cajaName}</span>` : ''}
         </div>
+        
+        ${currentQty > 0 && ad.status !== 'vendido' ? `
+          <div style="margin-top: 10px;">
+            <button class="btn-ghost" style="padding: 5px 10px; font-size: 9px; color: #27ae60; border-color: #27ae60; border-radius: 2px; font-weight: 600;" onclick="sellOneItem('${ad.id}')">💰 VENDER 1</button>
+          </div>
+        ` : ''}
       </div>
       <div class="ad-actions">
         <button class="icon-btn" onclick="editAd('${ad.id}')" title="Editar">✎</button>
@@ -460,20 +522,21 @@ function renderAds() {
     </div>
     <div class="wallapop-box" id="wbox-${ad.id}">
       <h4>📋 Texto para Wallapop</h4>
-      <div class="wallapop-text">${generateWallapopText(ad)}</div>
+      <div class="wallapop-text">${generateWallapopText(ad, currentQty)}</div>
       <button class="copy-btn" onclick="copyWallapop('${ad.id}')">Copiar texto</button>
     </div>
     `;
   }).join('');
 }
 
-function generateWallapopText(ad) {
+function generateWallapopText(ad, qty) {
   return [
     ad.title, '', ad.desc, '',
     `Estado: ${ad.condition || 'Buen estado'}`,
+    qty > 1 ? `Cantidad disponible: ${qty}` : undefined,
     `Categoría: ${ad.category || ''}`, '',
     '📍 Entrega en mano o envío acordado.',
-    'Precio: ' + (ad.price ? ad.price + '€' : 'a convenir'),
+    'Precio: ' + (ad.price ? ad.price + '€' + (qty > 1 ? ' c/u' : '') : 'a convenir'),
   ].filter(l=>l!==undefined).join('\n');
 }
 
@@ -482,8 +545,9 @@ function toggleWallapop(id) { document.getElementById('wbox-'+id).classList.togg
 function copyWallapop(id) {
   const ad = ads.find(a=>a.id===id);
   if (!ad) return;
+  const { qty: currentQty } = getAdStock(ad);
   const el = document.createElement('textarea');
-  el.value = ad.desc || 'Sin descripción guardada.';
+  el.value = generateWallapopText(ad, currentQty);
   document.body.appendChild(el);
   el.select();
   document.execCommand('copy');
@@ -505,12 +569,18 @@ function editAd(id) {
   if (!ad) return;
   editingAdId = id;
   currentPhotos = ad.photos ? [...ad.photos] : [];
+  
+  const stock = getAdStock(ad);
+  
   document.getElementById('f-title').value = ad.title || '';
   document.getElementById('f-price').value = ad.price || '';
+  document.getElementById('f-qty').value = stock.qty;
+  document.getElementById('f-soldQty').value = stock.soldQty;
   document.getElementById('f-cat').value = ad.category || 'Otro';
   document.getElementById('f-condition').value = ad.condition || 'Buen estado';
   document.getElementById('f-desc').value = ad.desc || '';
   document.getElementById('f-status').value = ad.status || 'borrador';
+  
   populateCajaSelect(ad.cajaId);
   renderPhotoPreview();
   document.getElementById('formTitle').textContent = '編集 · Editar anuncio';
@@ -521,6 +591,8 @@ function openAdForm() {
   editingAdId = null; currentPhotos = [];
   document.getElementById('f-title').value = '';
   document.getElementById('f-price').value = '';
+  document.getElementById('f-qty').value = '1';
+  document.getElementById('f-soldQty').value = '0';
   document.getElementById('f-cat').value = 'Otro';
   document.getElementById('f-condition').value = 'Buen estado';
   document.getElementById('f-desc').value = '';
@@ -564,7 +636,7 @@ function handlePhotos(e) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         
-        currentPhotos.push(canvas.toDataURL('image/jpeg', 0.7));
+        currentPhotos.push(canvas.toDataURL('image/jpeg', 0.6));
         processed++;
         if (processed === files.length) { spinner.style.display = 'none'; renderPhotoPreview(); }
       };
@@ -585,6 +657,20 @@ function removePhoto(i) { currentPhotos.splice(i, 1); renderPhotoPreview(); }
 function saveAd() {
   const title = document.getElementById('f-title').value.trim();
   if (!title) { alert('El título es obligatorio'); return; }
+  
+  let qtyInput = parseInt(document.getElementById('f-qty').value);
+  let soldQtyInput = parseInt(document.getElementById('f-soldQty').value);
+  if(isNaN(qtyInput)) qtyInput = 0;
+  if(isNaN(soldQtyInput)) soldQtyInput = 0;
+  
+  const statusInput = document.getElementById('f-status').value;
+
+  // Autocorrección si pones manualmente "Vendido" y olvidas cambiar los números
+  if (statusInput === 'vendido' && qtyInput > 0 && soldQtyInput === 0) {
+    soldQtyInput = qtyInput;
+    qtyInput = 0;
+  }
+
   const newCajaId = document.getElementById('f-caja').value;
   const adId = editingAdId || Date.now().toString();
   const oldAd = editingAdId ? ads.find(a=>a.id===editingAdId) : null;
@@ -593,10 +679,12 @@ function saveAd() {
   const ad = {
     id: adId, title,
     price: document.getElementById('f-price').value,
+    qty: qtyInput,
+    soldQty: soldQtyInput,
     category: document.getElementById('f-cat').value,
     condition: document.getElementById('f-condition').value,
     desc: document.getElementById('f-desc').value,
-    status: document.getElementById('f-status').value,
+    status: statusInput,
     cajaId: newCajaId,
     photos: currentPhotos,
     createdAt: oldAd ? oldAd.createdAt : Date.now(),
@@ -627,11 +715,9 @@ function renderAlmacen() {
   const unassignedAds = ads.filter(a => !a.cajaId);
   document.getElementById('emptyCajas').style.display = (cajas.length === 0 && unassignedAds.length === 0) ? 'block' : 'none';
   
-  // Calcular totales
-  const sinLugarTotal = unassignedAds.reduce((sum, ad) => sum + (parseFloat(ad.price) || 0), 0);
-  const grandTotal = ads.reduce((sum, ad) => sum + (parseFloat(ad.price) || 0), 0);
+  const sinLugarTotal = unassignedAds.reduce((sum, ad) => sum + ((parseFloat(ad.price) || 0) * getAdStock(ad).qty), 0);
+  const grandTotal = ads.reduce((sum, ad) => sum + ((parseFloat(ad.price) || 0) * getAdStock(ad).qty), 0);
   
-  // Actualizar el texto del dinero total general en la cabecera
   const grandTotalEl = document.getElementById('almacenGrandTotal');
   if (grandTotalEl) grandTotalEl.textContent = grandTotal + '€';
 
@@ -655,7 +741,7 @@ function renderAlmacen() {
           unassignedAds.map(ad => `
             <div class="caja-item">
               <div class="caja-item-dot linked" style="background: var(--gray);"></div>
-              <div class="caja-item-name">${ad.title || 'Sin título'}</div>
+              <div class="caja-item-name">${ad.title || 'Sin título'} ${getAdStock(ad).qty > 1 ? `(x${getAdStock(ad).qty})` : ''}</div>
               <button class="icon-btn" onclick="event.stopPropagation(); editAd('${ad.id}')" title="Editar anuncio" style="font-size:14px;">✎</button>
             </div>
           `).join('')
@@ -667,7 +753,10 @@ function renderAlmacen() {
 
   html += cajas.map(c => {
     const boxTotal = (c.items||[]).reduce((sum, item) => {
-      if(item.adId) { const ad = ads.find(a => a.id === item.adId); if(ad) return sum + (parseFloat(ad.price) || 0); }
+      if(item.adId) { 
+        const ad = ads.find(a => a.id === item.adId); 
+        if(ad) return sum + ((parseFloat(ad.price) || 0) * getAdStock(ad).qty); 
+      }
       return sum;
     }, 0);
     return `
@@ -689,10 +778,12 @@ function renderAlmacen() {
         ${(c.items||[]).length === 0 ? '<div class="caja-item" style="color:var(--gray);font-size:12px;">— vacía —</div>' :
           (c.items||[]).map((item,i) => {
             const linked = item.adId ? ads.find(a=>a.id===item.adId) : null;
+            const stock = linked ? getAdStock(linked) : { qty: 0 };
+            const qtyStr = (stock.qty > 1) ? ` <span style="font-size:10px;color:var(--gray);">x${stock.qty}</span>` : '';
             return `
             <div class="caja-item">
               <div class="caja-item-dot ${linked?'linked':''}"></div>
-              <div class="caja-item-name">${item.name}</div>
+              <div class="caja-item-name">${item.name}${qtyStr}</div>
               <div style="display:flex; gap:4px; align-items: center;">
                 <button class="icon-btn" onclick="event.stopPropagation(); ${linked ? `editAd('${item.adId}')` : `openItemForm('${c.id}', ${i})`}" style="font-size:14px;" title="Editar">✎</button>
                 <button class="icon-btn" onclick="event.stopPropagation(); removeItem('${c.id}',${i})" style="font-size:14px; color:var(--red);" title="Eliminar">✕</button>
@@ -750,7 +841,7 @@ function deleteCaja() {
       if (!item.adId) {
         ads.unshift({
           id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
-          title: item.name, price: '', category: 'Otro', condition: 'Buen estado',
+          title: item.name, price: '', qty: 1, soldQty: 0, category: 'Otro', condition: 'Buen estado',
           desc: 'Recuperado de la caja eliminada: ' + cajaToDelete.name,
           status: 'borrador', cajaId: '', photos: [], createdAt: Date.now()
         });
@@ -799,7 +890,6 @@ function saveItem() {
     const oldAdId = caja.items[currentItemIndex].adId;
     caja.items[currentItemIndex] = { name, adId: newAdId };
     
-    // Desenlazar anuncio viejo si cambió
     if (oldAdId && oldAdId !== newAdId) {
       const oldAd = ads.find(a=>a.id===oldAdId);
       if (oldAd) oldAd.cajaId = '';
@@ -808,7 +898,6 @@ function saveItem() {
     caja.items.push({ name, adId: newAdId });
   }
   
-  // Enlazar nuevo anuncio
   if (newAdId) { 
     const ad = ads.find(a=>a.id===newAdId); 
     if (ad) ad.cajaId = currentCajaId; 
@@ -831,3 +920,5 @@ renderAds();
 </script>
 </body>
 </html>
+
+
