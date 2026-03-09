@@ -129,7 +129,7 @@
 
   .caja-card { border: 1px solid var(--border); background: white; margin-bottom: 16px; overflow: hidden; }
   .caja-header { background: var(--ink); color: var(--paper); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-  .caja-name { font-family: 'Noto Serif JP', serif; font-size: 15px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+  .caja-name { font-family: 'Noto Serif JP', serif; font-size: 15px; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; flex: 1; }
   .caja-icon { display: flex; align-items: center; justify-content: center; }
   .hanko-icon { width: 28px; height: 18px; border: 1px solid var(--paper); background: white; display: flex; align-items: center; justify-content: center; }
   .hanko-circle { width: 8px; height: 8px; background-color: var(--red); border-radius: 50%; }
@@ -365,7 +365,6 @@ let currentPhotos = [];
 let currentFilter = 'Todos';
 let searchQuery = '';
 
-// Helper para obtener stock exacto y compatibilidad con versiones antiguas
 function getAdStock(ad) {
   let q = parseInt(ad.qty);
   if (isNaN(q)) q = ad.status === 'vendido' ? 0 : 1;
@@ -665,7 +664,6 @@ function saveAd() {
   
   const statusInput = document.getElementById('f-status').value;
 
-  // Autocorrección si pones manualmente "Vendido" y olvidas cambiar los números
   if (statusInput === 'vendido' && qtyInput > 0 && soldQtyInput === 0) {
     soldQtyInput = qtyInput;
     qtyInput = 0;
@@ -710,6 +708,20 @@ function saveAd() {
   if (document.getElementById('sec-almacen').style.display === 'block') renderAlmacen();
 }
 
+function moveCaja(index, direction) {
+  if (direction === -1 && index > 0) {
+    const temp = cajas[index];
+    cajas[index] = cajas[index - 1];
+    cajas[index - 1] = temp;
+  } else if (direction === 1 && index < cajas.length - 1) {
+    const temp = cajas[index];
+    cajas[index] = cajas[index + 1];
+    cajas[index + 1] = temp;
+  }
+  save();
+  renderAlmacen();
+}
+
 function renderAlmacen() {
   const el = document.getElementById('cajaList');
   const unassignedAds = ads.filter(a => !a.cajaId);
@@ -751,7 +763,7 @@ function renderAlmacen() {
     </div>
   `;
 
-  html += cajas.map(c => {
+  html += cajas.map((c, boxIndex) => {
     const boxTotal = (c.items||[]).reduce((sum, item) => {
       if(item.adId) { 
         const ad = ads.find(a => a.id === item.adId); 
@@ -766,12 +778,17 @@ function renderAlmacen() {
           <span class="caja-icon"><div class="hanko-icon"><div class="hanko-circle"></div></div></span>
           ${c.name} ${c.desc ? `<span style="font-family:'Noto Sans JP';font-weight:300;font-size:12px;color:var(--gray);">${c.desc}</span>` : ''}
         </div>
-        <div class="caja-header-right" style="flex-direction: row; align-items: center; gap: 12px;">
+        <div class="caja-header-right" style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
             <span class="caja-items-count">${(c.items||[]).length} obj.</span>
             ${boxTotal > 0 ? `<span class="caja-total">${boxTotal} €</span>` : ''}
           </div>
-          <button class="icon-btn" onclick="event.stopPropagation(); editCaja('${c.id}')" title="Editar Detalles de Caja" style="color: rgba(255,255,255,0.7); font-size: 16px; padding: 4px;">✎</button>
+          
+          <div style="display:flex; gap: 2px; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 6px; margin-left: 2px;">
+            ${boxIndex > 0 ? `<button class="icon-btn" onclick="event.stopPropagation(); moveCaja(${boxIndex}, -1)" style="color: rgba(255,255,255,0.6); font-size: 10px; padding: 4px;" title="Subir Caja">▲</button>` : `<div style="width:18px"></div>`}
+            ${boxIndex < cajas.length - 1 ? `<button class="icon-btn" onclick="event.stopPropagation(); moveCaja(${boxIndex}, 1)" style="color: rgba(255,255,255,0.6); font-size: 10px; padding: 4px;" title="Bajar Caja">▼</button>` : `<div style="width:18px"></div>`}
+            <button class="icon-btn" onclick="event.stopPropagation(); editCaja('${c.id}')" title="Editar Detalles de Caja" style="color: rgba(255,255,255,0.9); font-size: 16px; padding: 4px; margin-left: 4px;">✎</button>
+          </div>
         </div>
       </div>
       <div class="caja-body" id="caja-body-${c.id}">
