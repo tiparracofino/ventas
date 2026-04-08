@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -96,7 +97,13 @@
   .ad-image-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
 
   .ad-content { padding: 12px 12px 12px 14px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .ad-title { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 400; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  .ad-title-container { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; cursor: pointer; }
+  .ad-title-container:active { opacity: 0.6; }
+  .ad-title { font-family: 'Noto Serif JP', serif; font-size: 15px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .copy-hint { font-size: 10px; color: var(--gray); opacity: 0.6; transition: all 0.2s; }
+  @media (hover: hover) { .ad-title-container:hover .copy-hint { opacity: 1; color: var(--red); } }
+
   .ad-price { font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: -0.5px; display: flex; align-items: baseline; gap: 6px; }
   .ad-price span { font-size: 11px; font-weight: 300; color: var(--gray); letter-spacing: 0; }
   .ad-desc { font-size: 11px; color: var(--gray); margin-top: 4px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -152,9 +159,12 @@
   .stat-val { font-family: 'Noto Serif JP', serif; font-size: 22px; display: block; color: var(--red); }
   .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); }
 
+  /* Ajustes Wallapop Box */
   .wallapop-box { background: #fff; border: 1px solid var(--border); border-top: none; padding: 16px; display: none; }
   .wallapop-box.open { display: block; }
-  .wallapop-box h4 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .wallapop-section { margin-bottom: 16px; }
+  .wallapop-section:last-child { margin-bottom: 0; }
+  .wallapop-box h4 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
   .wallapop-text { font-size: 13px; line-height: 1.7; white-space: pre-wrap; color: var(--ink); background: var(--paper); padding: 12px; border-left: 3px solid var(--red); }
   .copy-btn { margin-top: 8px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; background: var(--ink); color: white; border: none; padding: 8px 14px; cursor: pointer; transition: background 0.2s; }
   .copy-btn:active { background: var(--red); }
@@ -374,8 +384,16 @@ function getAdStock(ad) {
 }
 
 function save() {
-  localStorage.setItem('uriba_ads', JSON.stringify(ads));
-  localStorage.setItem('uriba_cajas', JSON.stringify(cajas));
+  try {
+    localStorage.setItem('uriba_ads', JSON.stringify(ads));
+    localStorage.setItem('uriba_cajas', JSON.stringify(cajas));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      alert('¡Atención! La memoria de almacenamiento está llena. Por favor, elimina fotos o anuncios antiguos para guardar nuevos cambios.');
+    } else {
+      console.error(e);
+    }
+  }
 }
 
 function exportData() {
@@ -445,7 +463,15 @@ function renderFilters() {
 }
 
 function setFilter(cat) { currentFilter = cat; renderAds(); }
-function setSearch(query) { searchQuery = query.toLowerCase(); renderAds(); }
+
+function normalizeString(str) {
+  return (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function setSearch(query) { 
+  searchQuery = normalizeString(query); 
+  renderAds(); 
+}
 
 function sellOneItem(id) {
   const ad = ads.find(a => a.id === id);
@@ -464,6 +490,93 @@ function sellOneItem(id) {
   if (document.getElementById('sec-almacen').style.display === 'block') renderAlmacen();
 }
 
+// ==========================================
+// NUEVO SISTEMA DE COPIADO AL PORTAPAPELES
+// ==========================================
+
+function copyTitle(title, event) {
+  const el = document.createElement('textarea');
+  el.value = title;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+  
+  const container = event.currentTarget;
+  const hint = container.querySelector('.copy-hint');
+  const originalText = hint.textContent;
+  
+  hint.textContent = '✓ Copiado';
+  hint.style.color = 'var(--red)';
+  hint.style.opacity = '1';
+  
+  setTimeout(() => {
+    hint.textContent = originalText;
+    hint.style.color = '';
+    hint.style.opacity = '';
+  }, 1500);
+}
+
+// Función centralizada para copiar cualquier texto vinculado a un botón
+function copyTextToClipboard(text, event) {
+  const el = document.createElement('textarea');
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+
+  if (event && event.target) {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.style.background = '#27ae60'; // Cambio visual a verde
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 2000);
+  }
+}
+
+// Genera la descripción obviando el título
+function generateWallapopDesc(ad, qty) {
+  const parts = [];
+  
+  if (ad.desc && ad.desc.trim()) {
+    parts.push(ad.desc.trim());
+    parts.push(''); // Salto de línea estético si hay descripción
+  }
+  
+  parts.push(`Estado: ${ad.condition || 'Buen estado'}`);
+  if (qty > 1) parts.push(`Cantidad disponible: ${qty}`);
+  if (ad.category) parts.push(`Categoría: ${ad.category}`);
+  parts.push('');
+  parts.push('📍 Entrega en mano o envío acordado.');
+  parts.push('Precio: ' + (ad.price ? ad.price + '€' + (qty > 1 ? ' c/u' : '') : 'a convenir'));
+  
+  return parts.join('\n');
+}
+
+function copyAdTitle(id, event) {
+  const ad = ads.find(a => a.id === id);
+  if (!ad) return;
+  copyTextToClipboard(ad.title || 'Sin título', event);
+}
+
+function copyAdDesc(id, event) {
+  const ad = ads.find(a => a.id === id);
+  if (!ad) return;
+  const { qty } = getAdStock(ad);
+  const text = generateWallapopDesc(ad, qty);
+  copyTextToClipboard(text, event);
+}
+
+function toggleWallapop(id) { 
+  document.getElementById('wbox-' + id).classList.toggle('open'); 
+}
+
+// ==========================================
+
 function renderAds() {
   renderStats();
   renderFilters();
@@ -471,9 +584,9 @@ function renderAds() {
   let filtered = currentFilter === 'Todos' ? ads : ads.filter(a=>a.category===currentFilter);
   if (searchQuery) {
     filtered = filtered.filter(a => 
-      (a.title && a.title.toLowerCase().includes(searchQuery)) || 
-      (a.category && a.category.toLowerCase().includes(searchQuery)) ||
-      (a.desc && a.desc.toLowerCase().includes(searchQuery))
+      normalizeString(a.title).includes(searchQuery) || 
+      normalizeString(a.category).includes(searchQuery) ||
+      normalizeString(a.desc).includes(searchQuery)
     );
   }
   
@@ -486,13 +599,18 @@ function renderAds() {
     const cajaName = ad.cajaId ? (cajas.find(c=>c.id===ad.cajaId)||{name:'?'}).name : '';
     
     const { qty: currentQty, soldQty } = getAdStock(ad);
+    const safeTitle = (ad.title || 'Sin título').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const generatedDesc = generateWallapopDesc(ad, currentQty);
     
     return `
     <div class="ad-card ${ad.status}">
       <div class="ad-card-accent"></div>
       <div class="ad-image-slot">${img}</div>
       <div class="ad-content">
-        <div class="ad-title">${ad.title || 'Sin título'}</div>
+        <div class="ad-title-container" onclick="copyTitle('${safeTitle}', event)" title="Copiar título">
+          <div class="ad-title">${ad.title || 'Sin título'}</div>
+          <span class="copy-hint">📋</span>
+        </div>
         <div class="ad-price">
           ${ad.price ? ad.price+'€' : '—'} 
           ${currentQty > 1 ? `<span style="font-size: 14px; font-weight: 400; color: var(--ink);">x${currentQty}</span>` : ''}
@@ -515,44 +633,26 @@ function renderAds() {
       </div>
       <div class="ad-actions">
         <button class="icon-btn" onclick="editAd('${ad.id}')" title="Editar">✎</button>
-        <button class="icon-btn" onclick="toggleWallapop('${ad.id}')" title="Wallapop">📋</button>
+        <button class="icon-btn" onclick="toggleWallapop('${ad.id}')" title="Copiar Datos">📋</button>
         <button class="icon-btn" onclick="deleteAd('${ad.id}')" title="Eliminar" style="color:var(--red)">✕</button>
       </div>
     </div>
+    
     <div class="wallapop-box" id="wbox-${ad.id}">
-      <h4>📋 Texto para Wallapop</h4>
-      <div class="wallapop-text">${generateWallapopText(ad, currentQty)}</div>
-      <button class="copy-btn" onclick="copyWallapop('${ad.id}')">Copiar texto</button>
+      <div class="wallapop-section">
+        <h4>📋 Título</h4>
+        <div class="wallapop-text" style="border-left-color: var(--ink);">${ad.title || 'Sin título'}</div>
+        <button class="copy-btn" onclick="copyAdTitle('${ad.id}', event)">Copiar Título</button>
+      </div>
+      
+      <div class="wallapop-section">
+        <h4>📝 Descripción</h4>
+        <div class="wallapop-text">${generatedDesc}</div>
+        <button class="copy-btn" onclick="copyAdDesc('${ad.id}', event)">Copiar Descripción</button>
+      </div>
     </div>
     `;
   }).join('');
-}
-
-function generateWallapopText(ad, qty) {
-  return [
-    ad.title, '', ad.desc, '',
-    `Estado: ${ad.condition || 'Buen estado'}`,
-    qty > 1 ? `Cantidad disponible: ${qty}` : undefined,
-    `Categoría: ${ad.category || ''}`, '',
-    '📍 Entrega en mano o envío acordado.',
-    'Precio: ' + (ad.price ? ad.price + '€' + (qty > 1 ? ' c/u' : '') : 'a convenir'),
-  ].filter(l=>l!==undefined).join('\n');
-}
-
-function toggleWallapop(id) { document.getElementById('wbox-'+id).classList.toggle('open'); }
-
-function copyWallapop(id) {
-  const ad = ads.find(a=>a.id===id);
-  if (!ad) return;
-  const { qty: currentQty } = getAdStock(ad);
-  const el = document.createElement('textarea');
-  el.value = generateWallapopText(ad, currentQty);
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
-  event.target.textContent = '✓ Copiado';
-  setTimeout(()=>event.target.textContent='Copiar texto', 2000);
 }
 
 function deleteAd(id) {
@@ -939,3 +1039,4 @@ renderAds();
 </html>
 
 
+```
